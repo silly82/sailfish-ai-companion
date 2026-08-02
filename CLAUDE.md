@@ -2,6 +2,12 @@
 
 Sailfish OS AI Companion. Native Qt/QML-App, zwei Build-Targets aus einem Trunk.
 
+## Sprache
+
+Code, Kommentare, Commit-Messages und Bezeichner auf Englisch. Nutzerseitige
+Dokumentation zweisprachig: Englisch zuerst, danach Deutsch in Standardsprache
+(kein Dialekt). Übersetzungen liegen unter `translations/` (de/en).
+
 ## Nicht verhandelbare Architekturentscheidungen
 
 1. **Zwei Build-Targets, kein Git-Fork.** Ein Trunk, zwei RPM-Specs.

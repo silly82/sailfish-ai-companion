@@ -1,39 +1,93 @@
 # Sailfish AI Companion
 
-Nativer AI-Begleiter für Sailfish OS. Zwei Build-Targets aus einem Trunk:
+A native AI companion for Sailfish OS. Two build targets from a single trunk.
+
+*[Deutsche Fassung weiter unten](#deutsch)*
+
+---
+
+## English
+
+| Target | Package | Store | Sandbox |
+|---|---|---|---|
+| Harbour | `harbour-nemoai` | Jolla Store | Sailjail, minimal permissions |
+| Full | `sailfishai` | OpenRepos | unsandboxed |
+
+Both packages can be installed side by side.
+
+### Architecture in one sentence
+
+The difference between the targets is the **tool manifest**, not the code.
+`ToolRegistry` registers only what `Capabilities` reports at startup, and the
+QML interface hides the rest.
+
+The trunk is always Harbour-clean. The full target only ever adds, never
+removes — so the store build cannot break because of it.
+
+### Building
+
+```sh
+sfdk config target=SailfishOS-5.0.0.x-aarch64
+
+sfdk build                                    # Harbour (default)
+sfdk build -- --define "fullaccess 1"         # full access
+sfdk check                                    # Harbour validator
+```
+
+Run `sfdk check` before every store upload.
+
+### Status
+
+- [ ] M1 Vertical slice (chat, streaming, history)
+- [ ] M2 Tool framework
+- [ ] M3 Harbour release
+- [ ] M4 Full target / OpenRepos
+- [ ] M5 Local inference
+- [ ] M6 Voice
+
+Full concept: [`docs/konzept-v2.md`](docs/konzept-v2.md)
+
+---
+
+## Deutsch
+
+Nativer KI-Begleiter für Sailfish OS. Zwei Build-Targets aus einem Trunk.
 
 | Target | Paket | Store | Sandbox |
 |---|---|---|---|
-| Harbour | `harbour-nemoai` | Jolla Store | Sailjail, minimale Permissions |
-| Full | `sailfishai` | OpenRepos | unsandboxed |
+| Harbour | `harbour-nemoai` | Jolla Store | Sailjail, minimale Berechtigungen |
+| Full | `sailfishai` | OpenRepos | ohne Sandbox |
 
-Konzept: siehe `docs/konzept-v2.md`.
+Beide Pakete lassen sich gleichzeitig installieren.
 
-## Bauen
-
-```sh
-# Harbour (Default)
-sfdk config target=SailfishOS-5.0.0.x-aarch64
-sfdk build
-
-# Full-Access
-sfdk build -- --define "fullaccess 1"
-
-# Harbour-Validierung vor jedem Store-Upload
-sfdk check
-```
-
-## Architektur in einem Satz
+### Architektur in einem Satz
 
 Der Unterschied zwischen den Targets ist das **Tool-Manifest**, nicht der Code.
-`ToolRegistry` registriert beim Start nur, was `Capabilities` meldet; die QML-UI
-blendet den Rest aus.
+`ToolRegistry` registriert beim Start nur, was `Capabilities` meldet; die
+QML-Oberfläche blendet den Rest aus.
 
-## Status
+Der Trunk ist immer Harbour-konform. Das Full-Target fügt ausschliesslich hinzu
+und entfernt nie etwas — der Store-Build kann dadurch nicht brechen.
 
-- [ ] M1 Vertikaler Durchstich (Chat + Streaming + History)
+### Bauen
+
+```sh
+sfdk config target=SailfishOS-5.0.0.x-aarch64
+
+sfdk build                                    # Harbour (Standard)
+sfdk build -- --define "fullaccess 1"         # Vollzugriff
+sfdk check                                    # Harbour-Validator
+```
+
+`sfdk check` vor jedem Store-Upload ausführen.
+
+### Status
+
+- [ ] M1 Vertikaler Durchstich (Chat, Streaming, Verlauf)
 - [ ] M2 Tool-Framework
 - [ ] M3 Harbour-Release
 - [ ] M4 Full-Target / OpenRepos
-- [ ] M5 Lokale Inference
-- [ ] M6 Voice
+- [ ] M5 Lokale Inferenz
+- [ ] M6 Sprachein- und -ausgabe
+
+Ausführliches Konzept: [`docs/konzept-v2.md`](docs/konzept-v2.md)
