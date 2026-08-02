@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Icon=sailfishai
+Exec=sailfishai
+Name=AI Companion (Full)
+Name[de]=AI Companion (Vollzugriff)
+
+# Bewusst KEINE [X-Sailjail]-Sektion: die App laeuft unsandboxed.
+# Auf SFOS 5.x auf dem Zielgeraet verifizieren, ob das noch so greift.

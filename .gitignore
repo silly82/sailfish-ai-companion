@@ -1,0 +1,11 @@
+build/
+*.pro.user*
+*.o
+*.qm
+moc_*
+qrc_*
+Makefile*
+.rpmbuild/
+RPMS/
+models/*.gguf
+secrets.local

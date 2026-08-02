@@ -1,0 +1,12 @@
+# TODO M5 — separates Paket, NICHT in die App linken.
+#
+# Baut llama.cpp fuer aarch64 und installiert llama-server.
+# Zwingend:  -DGGML_OPENMP=OFF     (libgomp ist nicht Harbour-erlaubt und
+#                                   auf SFOS ohnehin nicht garantiert)
+#            -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8.2-a+dotprod
+#
+# A78 (Jolla Phone 2026) und A75 (C2) koennen dotprod, aber KEIN i8mm.
+# Q4_0 wird von llama.cpp zur Laufzeit passend repackt.
+#
+# Kein BLAS, kein Vulkan/OpenCL — CPU-only.
+# Modelle NIE mitpaketieren: Download beim ersten Start.

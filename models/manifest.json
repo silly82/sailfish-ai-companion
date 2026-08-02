@@ -1,0 +1,23 @@
+{
+  "_comment": "Modelle werden beim ersten Start heruntergeladen, nie mitpaketiert.",
+  "models": [
+    {
+      "id": "qwen3-4b-q4km",
+      "name": "Qwen3 4B Instruct",
+      "quant": "Q4_K_M",
+      "size_bytes": 2500000000,
+      "min_ram_bytes": 8589934592,
+      "recommended_for": ["jolla-phone-2026"],
+      "url": "TODO"
+    },
+    {
+      "id": "qwen3-1.7b-q4km",
+      "name": "Qwen3 1.7B Instruct",
+      "quant": "Q4_K_M",
+      "size_bytes": 1100000000,
+      "min_ram_bytes": 4294967296,
+      "recommended_for": ["jolla-c2", "jolla-phone-2026"],
+      "url": "TODO"
+    }
+  ]
+}

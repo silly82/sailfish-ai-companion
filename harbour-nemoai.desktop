@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Icon=harbour-nemoai
+Exec=harbour-nemoai
+Name=AI Companion
+Name[de]=AI Companion
+
+[X-Sailjail]
+OrganizationName=ch.silly
+ApplicationName=harbour-nemoai
+Permissions=Internet;Secrets;Contacts;Bluetooth
