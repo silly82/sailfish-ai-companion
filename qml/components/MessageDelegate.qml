@@ -6,6 +6,10 @@ ListItem {
     contentHeight: column.height + Theme.paddingLarge
     property bool isUser: model.role === "user"
 
+    // Tool-Ergebnisse sind JSON fuer das Modell, nicht fuer den Nutzer. Sie
+    // gehoeren in den Verlauf, aber als Beleg — nicht als Wortmeldung.
+    property bool isTool: model.role === "tool"
+
     Column {
         id: column
         x: Theme.horizontalPageMargin
@@ -23,9 +27,14 @@ ListItem {
 
         Label {
             width: parent.width
-            wrapMode: Text.WordWrap
+            wrapMode: item.isTool ? Text.NoWrap : Text.WordWrap
+            truncationMode: item.isTool ? TruncationMode.Fade : TruncationMode.None
             horizontalAlignment: item.isUser ? Text.AlignRight : Text.AlignLeft
-            color: item.isUser ? Theme.highlightColor : Theme.primaryColor
+            font.pixelSize: item.isTool ? Theme.fontSizeExtraSmall
+                                        : Theme.fontSizeMedium
+            color: item.isTool ? Theme.secondaryColor
+                 : item.isUser ? Theme.highlightColor
+                               : Theme.primaryColor
             text: model.content
         }
 

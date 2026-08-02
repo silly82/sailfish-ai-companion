@@ -1,15 +1,17 @@
 #ifndef SFAI_TOOLREGISTRY_H
 #define SFAI_TOOLREGISTRY_H
 
+#include "consentgate.h"
+
 #include <QObject>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QVariantMap>
+#include <QVector>
 #include <functional>
 
 class Capabilities;
 class ISystemProvider;
-class ConsentGate;
 
 /*!
  * Herzstück der Dual-Target-Architektur.
@@ -24,14 +26,10 @@ class ToolRegistry : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(int activeToolCount READ activeToolCount NOTIFY toolsChanged)
+    Q_PROPERTY(QVariantList tools READ tools NOTIFY toolsChanged)
 
 public:
-    enum class Sensitivity {
-        Low,        // Akku, Netz, Uhrzeit — kein Dialog
-        Personal,   // Kontakte, Kalender  — Bestätigung + Redaktion
-        Critical    // SMS, Dateien, exec  — Bestätigung, default aus
-    };
-    Q_ENUM(Sensitivity)
+    typedef ConsentGate::Sensitivity Sensitivity;
 
     struct Tool {
         QString                                 name;
@@ -51,25 +49,40 @@ public:
     void buildManifest();
 
     //! JSON-Schema für den "tools"-Parameter des Chat-Requests.
+    //! In Registrierungsreihenfolge — AIClient kürzt von hinten, wenn das
+    //! Backend weniger Tools verkraftet, also stehen die wichtigen vorn.
     QJsonArray toolSchema() const;
 
-    //! Führt einen Tool-Call aus — nur nach ConsentGate-Freigabe.
+    //! Führt einen Tool-Call aus. Prüft Freischaltung und Consent selbst und
+    //! liefert im Zweifel eine Fehlerkarte statt Daten:
+    //!   unknown_tool | tool_disabled | consent_required
     Q_INVOKABLE QVariantMap invoke(const QString &name, const QVariantMap &args);
 
-    int activeToolCount() const;
+    //! Wortlaut für den Bestätigungsdialog — was dieses Tool herausgeben will.
+    Q_INVOKABLE QString consentPreview(const QString &name,
+                                       const QVariantMap &args) const;
+
+    //! Freigabe aus dem Bestätigungsdialog. Geht an die Schleuse durch — die
+    //! Registry entscheidet nicht selbst über Consent, sie fragt nur.
+    Q_INVOKABLE void grantConsent(const QString &name);
+
+    Q_INVOKABLE bool contains(const QString &name) const;
     Q_INVOKABLE void setToolEnabled(const QString &name, bool enabled);
+
+    int          activeToolCount() const;
+    QVariantList tools() const;
 
 signals:
     void toolsChanged();
-    void consentRequired(const QString &toolName, const QVariantMap &preview);
 
 private:
     void registerTool(Tool t);
+    int  indexOf(const QString &name) const;
 
     Capabilities    *m_caps;
     ISystemProvider *m_provider;
     ConsentGate     *m_gate;
-    QHash<QString, Tool> m_tools;
+    QVector<Tool>    m_tools;   // Registrierungsreihenfolge ist bedeutungstragend
 };
 
 #endif

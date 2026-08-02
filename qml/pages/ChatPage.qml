@@ -15,6 +15,15 @@ Page {
     Connections {
         target: AI
         onErrorOccurred: banner.showError(message)
+
+        // Der Roundtrip wartet an dieser Stelle. Ohne Antwort laeuft er nicht
+        // weiter, und Wegnavigieren zaehlt als Ablehnung.
+        onConsentRequired: {
+            var dialog = pageStack.push(Qt.resolvedUrl("ConsentDialog.qml"),
+                                        { toolName: toolName, preview: preview })
+            dialog.accepted.connect(function() { AI.resolveConsent(true) })
+            dialog.rejected.connect(function() { AI.resolveConsent(false) })
+        }
     }
 
     SilicaListView {

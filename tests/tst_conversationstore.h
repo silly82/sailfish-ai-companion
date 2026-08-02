@@ -12,6 +12,9 @@ private slots:
     void streamsDeltaIntoPendingRow();
     void discardsEmptyPendingRow();
     void historyIsChronologicalAndCapped();
+    void keepsToolCallsWithTheirMessage();
+    void keepsMessageThatOnlyCarriesToolCalls();
+    void trimsHalfToolRoundsFromWindow();
     void deleteRemovesMessagesToo();
 };
 

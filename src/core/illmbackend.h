@@ -50,7 +50,10 @@ protected:
 
 signals:
     void delta(const QString &chunk);
-    void toolCall(const QString &name, const QVariantMap &args);
+
+    //! Die id gehoert dazu — die Antwort muss sie als tool_call_id
+    //! zurueckgeben, sonst ordnet das Modell sie nicht zu.
+    void toolCall(const QString &id, const QString &name, const QVariantMap &args);
     void finished();
     void failed(const QString &message);
 };

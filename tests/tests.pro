@@ -18,12 +18,19 @@ SOURCES += \
     main.cpp \
     tst_sseparser.cpp \
     tst_conversationstore.cpp \
-    tst_modellist.cpp
+    tst_modellist.cpp \
+    tst_consentgate.cpp \
+    tst_toolregistry.cpp \
+    tst_toolroundtrip.cpp
 
 HEADERS += \
+    fakes.h \
     tst_sseparser.h \
     tst_conversationstore.h \
-    tst_modellist.h
+    tst_modellist.h \
+    tst_consentgate.h \
+    tst_toolregistry.h \
+    tst_toolroundtrip.h
 
 # Der gesamte Core wird mitgebaut, nicht nur das Getestete — so faellt eine
 # Aenderung, die den Target-Build brechen wuerde, schon hier auf.

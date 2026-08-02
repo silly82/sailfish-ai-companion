@@ -43,6 +43,15 @@ public:
     Q_INVOKABLE void commitPending();
     Q_INVOKABLE void discardPending();
 
+    //! Haengt die Tool-Calls an die offene Assistant-Zeile. Sie gehoeren in
+    //! dieselbe Nachricht wie der Text — eine Tool-Antwort darf sich nur auf
+    //! die unmittelbar vorangehende Assistant-Nachricht beziehen.
+    void setPendingToolCalls(const QJsonArray &calls);
+
+    //! Ergebnis eines Tool-Aufrufs als eigene Nachricht mit Rolle "tool".
+    void appendToolResult(int conversationId, const QString &toolCallId,
+                          const QString &toolName, const QString &content);
+
     //! Verlauf im OpenAI-Format für den nächsten Request.
     QJsonArray history(int conversationId, int maxMessages = 40) const;
 
@@ -69,11 +78,14 @@ private:
         QString content;
         QString timestamp;
         QString toolName;
+        QString toolCalls;    //!< JSON-Array, wie es das Modell geschickt hat
+        QString toolCallId;   //!< nur bei Rolle "tool"
         bool    pending = false;
     };
 
-    bool createSchema();
-    void setCurrentConversation(int id);
+    bool   createSchema();
+    qint64 insertMessage(int conversationId, const Message &m);
+    void   setCurrentConversation(int id);
 
     QSqlDatabase     m_db;
     QString          m_connectionName;

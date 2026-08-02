@@ -87,9 +87,13 @@ Geraet Qt 5.6. Ein gruener Lauf ersetzt `sfdk build` nicht, deshalb in
 
 ## Nächster Schritt
 
-M1 ist implementiert, aber noch auf keinem Geraet gelaufen. Offen:
-`sfdk build` gegen beide Targets, Chat mit echtem Key auf dem Geraet testen,
-dann M2 (`ToolRegistry` + `ConsentGate` + erste drei Tools).
+M1 und M2 sind implementiert, aber noch auf keinem Geraet gelaufen. Offen:
+`sfdk build` gegen beide Targets, Chat mit echtem Key auf dem Geraet testen —
+inklusive eines Modells, das Function-Calling wirklich beherrscht — dann M3.
+
+Der Tool-Roundtrip ist auf dem Desktop gegen ein Fake-Backend abgedeckt
+(`tests/tst_toolroundtrip.cpp`). Was dort nicht auffaellt: ob ein echtes
+Modell die Schemas so beantwortet, wie die Spec es verspricht.
 
 `KeyStore` legt den Key derzeit als Datei mit 0600 ab. Das ist die
 Full-Target-Variante — vor einem Store-Upload muss M3 auf Sailfish.Secrets

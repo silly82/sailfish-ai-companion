@@ -115,7 +115,7 @@ void OpenRouterBackend::emitToolCalls()
         if (it.value().name.isEmpty()) continue;
         const QJsonObject args =
             QJsonDocument::fromJson(it.value().arguments.toUtf8()).object();
-        emit toolCall(it.value().name, args.toVariantMap());
+        emit toolCall(it.value().id, it.value().name, args.toVariantMap());
     }
     m_toolCalls.clear();
 }
