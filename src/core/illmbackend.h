@@ -37,8 +37,16 @@ public:
     //! der Flaschenhals — nicht die Generierung.
     virtual int maxTools() const = 0;
 
+    //! Modell-Kennung, wie sie das Backend im Request erwartet.
+    //! Nie hardcoden — die Liste kommt zur Laufzeit von /models.
+    QString model() const { return m_model; }
+    void    setModel(const QString &id) { m_model = id; }
+
     virtual void chat(const QJsonArray &messages, const QJsonArray &tools) = 0;
     virtual void cancel() = 0;
+
+protected:
+    QString m_model;
 
 signals:
     void delta(const QString &chunk);

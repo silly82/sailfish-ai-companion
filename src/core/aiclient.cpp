@@ -1,36 +1,91 @@
 #include "aiclient.h"
+#include "conversationstore.h"
 #include "keystore.h"
+#include "openrouterbackend.h"
 #include "toolregistry.h"
-#include <QNetworkRequest>
-#include <QNetworkReply>
 
-AIClient::AIClient(KeyStore *keys, ToolRegistry *tools, QObject *parent)
-    : QObject(parent), m_keys(keys), m_tools(tools) {}
+#include <QJsonArray>
+#include <QSettings>
 
-void AIClient::setBaseUrl(const QString &u)
-{ if (m_baseUrl == u) return; m_baseUrl = u; emit baseUrlChanged(); }
+AIClient::AIClient(KeyStore *keys, ToolRegistry *tools, ConversationStore *store,
+                   QObject *parent)
+    : QObject(parent)
+    , m_cloud(new OpenRouterBackend(keys, this))
+    , m_backend(m_cloud)
+    , m_tools(tools)
+    , m_store(store)
+{
+    connect(m_cloud, &ILlmBackend::delta, this, [this](const QString &chunk) {
+        m_store->appendDelta(chunk);
+    });
+    connect(m_cloud, &ILlmBackend::toolCall, this, &AIClient::toolCallRequested);
 
-void AIClient::setModel(const QString &m)
-{ if (m_model == m) return; m_model = m; emit modelChanged(); }
+    connect(m_cloud, &ILlmBackend::finished, this, [this]() {
+        m_store->commitPending();
+        setStreaming(false);
+        emit messageComplete(m_activeConversation);
+    });
+
+    connect(m_cloud, &ILlmBackend::failed, this, [this](const QString &message) {
+        // Bereits gestreamten Text stehen lassen — er verschwindet sonst vor
+        // den Augen des Nutzers. Nur eine leere Zeile wird entfernt.
+        m_store->commitPending();
+        setStreaming(false);
+        emit errorOccurred(message);
+    });
+
+    connect(m_cloud, &OpenRouterBackend::modelsRefreshed,
+            this, [this](const QVariantList &models) {
+        m_models = models;
+        emit modelsChanged();
+    });
+
+    // Nur die Modell-Kennung, nie der Key — der gehört in den KeyStore.
+    m_backend->setModel(QSettings().value(QStringLiteral("model")).toString());
+}
+
+QString AIClient::model() const { return m_backend->model(); }
+
+void AIClient::setModel(const QString &id)
+{
+    if (m_backend->model() == id) return;
+    m_backend->setModel(id);
+    QSettings().setValue(QStringLiteral("model"), id);
+    emit modelChanged();
+}
+
+void AIClient::setStreaming(bool v)
+{
+    if (m_streaming == v) return;
+    m_streaming = v;
+    emit streamingChanged();
+}
 
 void AIClient::sendMessage(const QString &text, int conversationId)
 {
-    Q_UNUSED(text) Q_UNUSED(conversationId)
-    // TODO M1: POST {baseUrl}/chat/completions, "stream": true
-    //   Header: Authorization: Bearer <key aus KeyStore>
-    //           HTTP-Referer / X-Title  (OpenRouter-Attribution, optional)
-    //   Body:   messages[] aus ConversationStore + tools aus ToolRegistry
-    //   SSE-Parsing: readyRead() -> "data: " Zeilen -> deltaReceived()
-    emit errorOccurred(tr("Nicht implementiert (M1)"));
+    if (text.isEmpty() || m_streaming) return;
+    if (conversationId < 0) {
+        emit errorOccurred(tr("Keine Konversation geöffnet"));
+        return;
+    }
+
+    m_activeConversation = conversationId;
+    m_store->appendMessage(conversationId, QStringLiteral("user"), text);
+
+    QJsonArray tools = m_tools->toolSchema();
+    while (tools.size() > m_backend->maxTools()) tools.removeLast();
+
+    m_store->beginAssistantMessage(conversationId);
+    setStreaming(true);
+    m_backend->chat(m_store->history(conversationId), tools);
 }
 
-void AIClient::refreshModels()
-{
-    // TODO M1: GET {baseUrl}/models, cachen, nach tool_use + Kontext filtern
-}
+void AIClient::refreshModels() { m_cloud->refreshModels(); }
 
 void AIClient::cancel()
 {
-    if (m_current) { m_current->abort(); m_current = nullptr; }
-    if (m_streaming) { m_streaming = false; emit streamingChanged(); }
+    m_backend->cancel();
+    m_store->commitPending();
+    m_store->discardPending();
+    setStreaming(false);
 }

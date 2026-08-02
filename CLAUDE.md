@@ -77,10 +77,20 @@ sfdk build -- --define "fullaccess 1"         # Full-Access
 sfdk check                                    # Harbour-Validator
 ```
 
+Ohne SDK: `src/core/` ist frei von Silica und Sailfish-APIs und baut auf dem
+Desktop. `nix-shell --run 'scripts/run-tests.sh'` baut den gesamten Core und
+laesst die QtTest-Suite laufen — dort faellt auf, was den Target-Build brechen
+wuerde. Aber: Desktop ist Qt 5.15, das Geraet Qt 5.6. Ein gruener Lauf ersetzt
+`sfdk build` nicht, deshalb in `src/core/` bei Qt-5.6-APIs bleiben.
+
 ## Nächster Schritt
 
-M1, vertikaler Durchstich: `OpenRouterBackend::chat()` mit SSE-Streaming,
-`ConversationStore::open()` mit Schema, `MainPage` an eine echte
-Konversationsliste binden. Alles andere sind TODO-Stubs.
+M1 ist implementiert, aber noch auf keinem Geraet gelaufen. Offen:
+`sfdk build` gegen beide Targets, Chat mit echtem Key auf dem Geraet testen,
+dann M2 (`ToolRegistry` + `ConsentGate` + erste drei Tools).
+
+`KeyStore` legt den Key derzeit als Datei mit 0600 ab. Das ist die
+Full-Target-Variante — vor einem Store-Upload muss M3 auf Sailfish.Secrets
+umstellen.
 
 Detailkonzept: `docs/konzept-v2.md`

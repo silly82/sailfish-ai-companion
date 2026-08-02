@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QJsonArray>
+#include <QJsonObject>
 #include <QVariantMap>
 #include <functional>
 

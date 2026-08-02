@@ -36,9 +36,18 @@ sfdk check                                    # Harbour validator
 
 Run `sfdk check` before every store upload.
 
+Without the SDK: `src/core/` is plain Qt by design and builds on the desktop.
+
+```sh
+nix-shell --run 'scripts/run-tests.sh'
+```
+
+This builds the whole core and runs the QtTest suite. Note it uses Qt 5.15
+while the device runs Qt 5.6 — a green run is not proof that the target builds.
+
 ### Status
 
-- [ ] M1 Vertical slice (chat, streaming, history)
+- [x] M1 Vertical slice (chat, streaming, history) — not yet run on a device
 - [ ] M2 Tool framework
 - [ ] M3 Harbour release
 - [ ] M4 Full target / OpenRepos
@@ -81,9 +90,18 @@ sfdk check                                    # Harbour-Validator
 
 `sfdk check` vor jedem Store-Upload ausführen.
 
+Ohne SDK: `src/core/` ist bewusst reines Qt und baut auf dem Desktop.
+
+```sh
+nix-shell --run 'scripts/run-tests.sh'
+```
+
+Das baut den gesamten Core und führt die QtTest-Suite aus. Achtung: hier läuft
+Qt 5.15, auf dem Gerät Qt 5.6 — ein grüner Lauf beweist den Target-Build nicht.
+
 ### Status
 
-- [ ] M1 Vertikaler Durchstich (Chat, Streaming, Verlauf)
+- [x] M1 Vertikaler Durchstich (Chat, Streaming, Verlauf) — noch nicht auf Gerät gelaufen
 - [ ] M2 Tool-Framework
 - [ ] M3 Harbour-Release
 - [ ] M4 Full-Target / OpenRepos

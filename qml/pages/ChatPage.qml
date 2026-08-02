@@ -12,13 +12,21 @@ Page {
     property int conversationId: -1
     allowedOrientations: Orientation.All
 
+    Connections {
+        target: AI
+        onErrorOccurred: banner.showError(message)
+    }
+
     SilicaListView {
         id: chatView
         anchors { top: parent.top; left: parent.left; right: parent.right; bottom: input.top }
         clip: true
         model: History
         delegate: MessageDelegate {}
-        verticalLayoutDirection: ListView.BottomToTop
+
+        // Model ist chronologisch; die neueste Nachricht steht unten und soll
+        // beim Streamen sichtbar bleiben.
+        onCountChanged: positionViewAtEnd()
 
         PullDownMenu {
             MenuItem {
@@ -38,15 +46,39 @@ Page {
                 ? qsTr("Lokal — nichts verlässt das Gerät")
                 : qsTr("%1 Tools aktiv").arg(Tools.activeToolCount)
         }
+
+        VerticalScrollDecorator {}
+    }
+
+    Label {
+        id: banner
+        function showError(text) { banner.text = text; hideTimer.restart() }
+
+        anchors { left: parent.left; right: parent.right; bottom: input.top }
+        leftPadding: Theme.horizontalPageMargin
+        rightPadding: Theme.horizontalPageMargin
+        wrapMode: Text.WordWrap
+        font.pixelSize: Theme.fontSizeExtraSmall
+        color: Theme.errorColor
+        visible: text.length > 0
+
+        Timer {
+            id: hideTimer
+            interval: 6000
+            onTriggered: banner.text = ""
+        }
     }
 
     TextArea {
         id: input
         anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-        placeholderText: qsTr("Nachricht")
+        placeholderText: AI.model.length ? qsTr("Nachricht")
+                                         : qsTr("Zuerst ein Modell wählen")
+        enabled: !AI.streaming && AI.model.length > 0
+        EnterKey.enabled: text.trim().length > 0
+        EnterKey.iconSource: "image://theme/icon-m-enter-accept"
         EnterKey.onClicked: {
-            if (text.length === 0) return
-            AI.sendMessage(text, page.conversationId)
+            AI.sendMessage(text.trim(), page.conversationId)
             text = ""
         }
     }

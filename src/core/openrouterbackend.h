@@ -2,7 +2,9 @@
 #define SFAI_OPENROUTERBACKEND_H
 
 #include "illmbackend.h"
+#include "sseparser.h"
 #include <QNetworkAccessManager>
+#include <QMap>
 
 class KeyStore;
 class QNetworkReply;
@@ -15,6 +17,7 @@ public:
     explicit OpenRouterBackend(KeyStore *keys, QObject *parent = nullptr);
 
     QString baseUrl() const override { return m_baseUrl; }
+    void    setBaseUrl(const QString &url) { m_baseUrl = url; }
     bool    isLocal() const override { return false; }
     bool    available() const override;
     int     maxContextTokens() const override { return 32768; }
@@ -27,16 +30,33 @@ public:
     //! Kontextlänge + Preis filtern.
     void refreshModels();
 
+    //! Wertet die /models-Antwort aus. Statisch und ohne QtNetwork, damit
+    //! sich die Auswahlregeln ohne Netzzugriff testen lassen.
+    static QVariantList parseModelList(const QByteArray &json);
+
 signals:
     void modelsRefreshed(const QVariantList &models);
 
 private:
-    void handleSseChunk(const QByteArray &line);
+    struct PartialToolCall {
+        QString id;
+        QString name;
+        QString arguments;   // trifft über mehrere Deltas fragmentiert ein
+    };
+
+    void readStream();
+    void handleEvent(const QByteArray &payload);
+    void finishStream();
+    void emitToolCalls();
 
     QNetworkAccessManager m_nam;
-    KeyStore     *m_keys;
+    KeyStore      *m_keys;
     QNetworkReply *m_reply = nullptr;
     QString m_baseUrl = QStringLiteral("https://openrouter.ai/api/v1");
+
+    SseParser m_sse;
+    QMap<int, PartialToolCall> m_toolCalls;
+    bool m_sawDone = false;
 };
 
 #endif

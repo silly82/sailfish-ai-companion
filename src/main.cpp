@@ -33,9 +33,8 @@ int main(int argc, char *argv[])
 
     auto *tools  = new ToolRegistry(caps, provider, gate, app.data());
     tools->buildManifest();
-    auto *client = new AIClient(keys, tools, app.data());
-
     store->open();
+    auto *client = new AIClient(keys, tools, store, app.data());
 
     QScopedPointer<QQuickView> view(SailfishApp::createView());
     QQmlContext *ctx = view->rootContext();

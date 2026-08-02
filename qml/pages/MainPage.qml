@@ -6,8 +6,15 @@ Page {
     id: page
     allowedOrientations: Orientation.All
 
+    function openConversation(id) {
+        History.loadConversation(id)
+        pageStack.push(Qt.resolvedUrl("ChatPage.qml"), { conversationId: id })
+    }
+
     SilicaListView {
+        id: view
         anchors.fill: parent
+        model: History.conversations
 
         PullDownMenu {
             MenuItem {
@@ -20,7 +27,8 @@ Page {
             }
             MenuItem {
                 text: qsTr("Neue Konversation")
-                onClicked: pageStack.push(Qt.resolvedUrl("ChatPage.qml"))
+                onClicked: page.openConversation(
+                    History.createConversation(qsTr("Neue Konversation")))
             }
         }
 
@@ -30,13 +38,52 @@ Page {
                                         : qsTr("Vollzugriff")
         }
 
-        // TODO M1: model an eine Konversationsliste aus ConversationStore binden
-        model: 0
+        delegate: ListItem {
+            id: item
+            contentHeight: Theme.itemSizeMedium
+            onClicked: page.openConversation(modelData.conversationId)
+
+            Column {
+                anchors {
+                    left: parent.left; right: parent.right
+                    leftMargin: Theme.horizontalPageMargin
+                    rightMargin: Theme.horizontalPageMargin
+                    verticalCenter: parent.verticalCenter
+                }
+
+                Label {
+                    width: parent.width
+                    truncationMode: TruncationMode.Fade
+                    text: modelData.title
+                    color: item.highlighted ? Theme.highlightColor : Theme.primaryColor
+                }
+                Label {
+                    width: parent.width
+                    truncationMode: TruncationMode.Fade
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    color: Theme.secondaryColor
+                    text: modelData.preview.length
+                          ? modelData.preview
+                          : qsTr("%n Nachricht(en)", "", modelData.messageCount)
+                }
+            }
+
+            menu: ContextMenu {
+                MenuItem {
+                    text: qsTr("Löschen")
+                    onClicked: item.remorseAction(qsTr("Löschen"), function() {
+                        History.deleteConversation(modelData.conversationId)
+                    })
+                }
+            }
+        }
 
         ViewPlaceholder {
-            enabled: true
+            enabled: view.count === 0
             text: qsTr("Noch keine Konversation")
             hintText: qsTr("Von oben ziehen, um zu starten")
         }
+
+        VerticalScrollDecorator {}
     }
 }
