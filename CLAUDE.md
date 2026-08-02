@@ -7,7 +7,9 @@ Sailfish OS AI Companion. Native Qt/QML-App, zwei Build-Targets aus einem Trunk.
 Code, Kommentare, Commit-Messages und Bezeichner auf Englisch. Nutzerseitige
 Dokumentation zweisprachig: Englisch zuerst, danach Schweizer Hochdeutsch
 (Standardsprache, kein Dialekt, durchgehend «ss» statt «ß»).
-Übersetzungen liegen unter `translations/` (de/en).
+Übersetzungen sollen unter `translations/` (de/en) liegen — das Verzeichnis
+existiert noch nicht, die Strings sind aber durchgehend in `qsTr()` gefasst.
+Anlegen gehört zu M3.
 
 ## Nicht verhandelbare Architekturentscheidungen
 

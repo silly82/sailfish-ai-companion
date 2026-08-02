@@ -84,7 +84,9 @@ the target builds, so keep to Qt 5.6 APIs in `src/core/`.
 ### Status
 
 - [x] M1 Vertical slice (chat, streaming, history) — not yet run on a device
-- [ ] M2 Tool framework
+- [x] M2 Tool framework (registry, consent gate, function-calling roundtrip) —
+      covered by desktop tests against a fake backend, not yet run against a
+      real model or on a device
 - [ ] M3 Harbour release
 - [ ] M4 Full target / OpenRepos
 - [ ] M5 Local inference
@@ -175,7 +177,9 @@ Target-Build nicht, in `src/core/` also bei Qt-5.6-APIs bleiben.
 ### Status
 
 - [x] M1 Vertikaler Durchstich (Chat, Streaming, Verlauf) — noch nicht auf Gerät gelaufen
-- [ ] M2 Tool-Framework
+- [x] M2 Tool-Framework (Registry, Datenschleuse, Function-Calling-Roundtrip) —
+      durch Desktop-Tests gegen ein Fake-Backend abgedeckt, noch nicht gegen ein
+      echtes Modell und nicht auf dem Gerät gelaufen
 - [ ] M3 Harbour-Release
 - [ ] M4 Full-Target / OpenRepos
 - [ ] M5 Lokale Inferenz

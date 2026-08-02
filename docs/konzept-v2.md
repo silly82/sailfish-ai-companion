@@ -35,38 +35,63 @@ Das ist die eigentliche Optimierung. Der Unterschied zwischen den Targets ist
 
 ```
 sailfish-ai-companion/
-├── core/                      # 100% branchneutral, Harbour-clean
-│   ├── AIClient.cpp           # OpenRouter/OpenAI-kompatibler Client
-│   ├── ConversationStore.cpp  # SQLite via QSqlDatabase
-│   ├── ToolRegistry.cpp       # ← Herzstück
-│   └── ConsentGate.cpp        # Datenschleuse vor jedem Tool-Call
-├── platform/
-│   ├── ISystemProvider.h      # abstraktes Interface
+├── src/core/                  # 100% branchneutral, Harbour-clean
+│   ├── aiclient.cpp           # Chat-Runde inkl. Function-Calling-Roundtrip
+│   ├── illmbackend.h          # gemeinsames Interface beider Backends
+│   ├── openrouterbackend.cpp  # Cloud-Pfad, SSE-Streaming
+│   ├── localserverbackend.cpp # llama-server auf 127.0.0.1:8080
+│   ├── sseparser.cpp          # Ereignis-Framing, weil TCP mitten in Zeilen schneidet
+│   ├── conversationstore.cpp  # SQLite via QSqlDatabase
+│   ├── keystore.cpp           # API-Key, nie in QSettings
+│   ├── capabilities.cpp       # was dieses Target kann
+│   ├── toolregistry.cpp       # ← Herzstück
+│   └── consentgate.cpp        # Datenschleuse vor jedem Tool-Call
+├── src/platform/
+│   ├── isystemprovider.h      # abstraktes Interface
 │   ├── sandboxed/             # ContextKit, Sailfish.Contacts, BluezQt
 │   └── full/                  # QtDBus roh, libcommhistory, mkcal, exec
-├── qml/
-│   ├── shared/                # gesamte UI — einmal
-│   └── components/
+├── qml/                       # gesamte UI — einmal
+│   ├── pages/
+│   ├── components/
+│   └── cover/
+├── tests/                     # QtTest gegen src/core/, ohne SDK lauffähig
 ├── rpm/
 │   ├── harbour-nemoai.spec
-│   └── sailfishai.spec
-├── po/
-└── models/                    # nur .gguf-Downloadmanifest, keine Blobs
+│   ├── sailfishai.spec
+│   └── sailfishai-llama.spec.todo
+├── translations/              # geplant (M3), de/en
+└── models/                    # geplant (M5), nur .gguf-Downloadmanifest, keine Blobs
 ```
 
 ### Tool-Registry (LLM-Function-Calling)
 
-Jede Systemintegration ist ein **Tool** mit deklariertem Capability-Bedarf:
+Jede Systemintegration ist ein **Tool** mit deklarierter Sensitivität:
 
 ```cpp
 struct Tool {
-    QString      name;          // "get_battery_status"
-    QString      jsonSchema;    // an das Modell gesendet
-    Capability   requires;      // Cap::Battery
-    Sensitivity  level;         // Low | Personal | Critical
+    QString      name;             // "get_battery_status"
+    QString      description;      // geht als Beschreibung ins Schema
+    QJsonObject  parameterSchema;  // an das Modell gesendet
+    Sensitivity  level;            // Low | Personal | Critical
     Handler      fn;
+    bool         enabled;          // Per-Tool-Toggle, in QSettings gemerkt
 };
 ```
+
+Der Capability-Bedarf steht seit M2 nicht als Feld im Tool, sondern als
+Bedingung um die Registrierung herum: `buildManifest()` fragt `Capabilities`
+und registriert das Tool gar nicht erst, wenn das Target es nicht kann. Ein
+Feld hätte bedeutet, nicht verfügbare Tools trotzdem in der Liste zu führen und
+an jeder Auswertung erneut auszufiltern.
+
+`Sensitivity` selbst ist in `ConsentGate` beheimatet und nicht in der Registry:
+die Einstufung ist eine Consent-Frage — die Schleuse entscheidet daran, und QML
+zeigt sie als Badge. Die Registry deklariert sie nur pro Tool.
+
+Die Reihenfolge der Registrierung ist bedeutungstragend. Verkraftet ein Backend
+weniger Tools als registriert sind (`maxTools()`, lokal 4 statt 32), kürzt
+`AIClient` das Schema von hinten — die billigen Systemtools stehen deshalb
+vorn, das Personenbezogene hinten.
 
 Beim Start registriert sich nur, was das Target kann. Die QML-UI fragt einen
 `Capabilities`-Singleton ab und blendet Nicht-Verfügbares aus — **keine
