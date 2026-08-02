@@ -110,7 +110,7 @@ sailfish-ai-companion/
 
 ### Offline-Funktionalität:
 - llama.cpp Integration
-- Model-Größenanpassung für Mobile
+- Model-Grössenanpassung für Mobile
 - Quantisierte Modelle (4-7GB range)
 
 ## 🚀 Entwicklungsplan
