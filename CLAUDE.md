@@ -78,10 +78,12 @@ sfdk check                                    # Harbour-Validator
 ```
 
 Ohne SDK: `src/core/` ist frei von Silica und Sailfish-APIs und baut auf dem
-Desktop. `nix-shell --run 'scripts/run-tests.sh'` baut den gesamten Core und
-laesst die QtTest-Suite laufen — dort faellt auf, was den Target-Build brechen
-wuerde. Aber: Desktop ist Qt 5.15, das Geraet Qt 5.6. Ein gruener Lauf ersetzt
-`sfdk build` nicht, deshalb in `src/core/` bei Qt-5.6-APIs bleiben.
+Desktop. `nix develop -c scripts/run-tests.sh` baut den gesamten Core und laesst
+die QtTest-Suite laufen — dort faellt auf, was den Target-Build brechen wuerde.
+`flake.nix` und `shell.nix` teilen sich dieselbe Shell-Definition; der klassische
+Weg ueber Distributionspakete steht in der README. Aber: Desktop ist Qt 5.15, das
+Geraet Qt 5.6. Ein gruener Lauf ersetzt `sfdk build` nicht, deshalb in
+`src/core/` bei Qt-5.6-APIs bleiben.
 
 ## Nächster Schritt
 

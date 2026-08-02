@@ -4,7 +4,12 @@
 # Silica. Everything under src/core/ is plain Qt by design, so it can be built
 # and unit-tested here:
 #
-#   nix-shell --run 'scripts/run-tests.sh'
+#   nix develop -c scripts/run-tests.sh      # pinned via flake.lock
+#   nix-shell --run 'scripts/run-tests.sh'   # fallback, uses the ambient channel
+#
+# flake.nix imports this file, so both entry points build the same shell — only
+# the nixpkgs revision differs. Prefer the flake; the channel path exists for
+# setups without flakes and can drift to a different Qt 5.15.x.
 #
 # CAVEAT: this is Qt 5.15, the device runs Qt 5.6. A green test run here does
 # not prove the target builds. Stick to Qt 5.6 APIs in src/core/ — notably
