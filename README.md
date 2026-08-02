@@ -94,6 +94,11 @@ the target builds, so keep to Qt 5.6 APIs in `src/core/`.
 
 Full concept: [`docs/konzept-v2.md`](docs/konzept-v2.md)
 
+### License
+
+MIT — see [`LICENSE`](LICENSE). Copy, modify and redistribute freely; the only
+condition is that the copyright notice travels with it.
+
 ---
 
 ## Deutsch
@@ -186,3 +191,8 @@ Target-Build nicht, in `src/core/` also bei Qt-5.6-APIs bleiben.
 - [ ] M6 Sprachein- und -ausgabe
 
 Ausführliches Konzept: [`docs/konzept-v2.md`](docs/konzept-v2.md)
+
+### Lizenz
+
+MIT — siehe [`LICENSE`](LICENSE). Kopieren, ändern und weitergeben ist frei;
+einzige Bedingung ist, dass der Copyright-Vermerk mitgeht.
