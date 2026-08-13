@@ -22,12 +22,13 @@ Page {
             onClicked: { AI.model = modelData.id; pageStack.pop() }
 
             Column {
-                anchors {
-                    left: parent.left; right: parent.right
-                    leftMargin: Theme.horizontalPageMargin
-                    rightMargin: Theme.horizontalPageMargin
-                    verticalCenter: parent.verticalCenter
-                }
+                // Siehe MainPage.qml: Breite direkt von item statt ueber
+                // Anchors, sonst hinkt sie bei wiederverwendeten Delegates
+                // einen Frame hinterher und TruncationMode.Fade zeigt kurz
+                // Text der vorherigen Zeile — doppelt, leicht versetzt.
+                x: Theme.horizontalPageMargin
+                width: item.width - 2 * Theme.horizontalPageMargin
+                anchors.verticalCenter: parent.verticalCenter
 
                 Label {
                     width: parent.width

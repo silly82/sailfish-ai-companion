@@ -44,12 +44,15 @@ Page {
             onClicked: page.openConversation(modelData.conversationId)
 
             Column {
-                anchors {
-                    left: parent.left; right: parent.right
-                    leftMargin: Theme.horizontalPageMargin
-                    rightMargin: Theme.horizontalPageMargin
-                    verticalCenter: parent.verticalCenter
-                }
+                // Breite direkt von item ableiten statt ueber die Anchors
+                // dieser Column: bei wiederverwendeten Delegates (Scrollen)
+                // hinkt die anchor-vermittelte Breite sonst einen Frame
+                // hinterher, und TruncationMode.Fade rendert Titel/Preview
+                // dann kurz mit der Breite der vorherigen Zeile — sichtbar
+                // als doppelter, leicht versetzter Text.
+                x: Theme.horizontalPageMargin
+                width: item.width - 2 * Theme.horizontalPageMargin
+                anchors.verticalCenter: parent.verticalCenter
 
                 Label {
                     width: parent.width
