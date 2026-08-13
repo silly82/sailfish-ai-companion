@@ -24,6 +24,16 @@ QML interface hides the rest.
 The trunk is always Harbour-clean. The full target only ever adds, never
 removes — so the store build cannot break because of it.
 
+### First-run fixes
+
+This commit fixes several issues that affected the first launch on the Sailfish emulator:
+
+- the main QML file is now loaded correctly for both targets
+- the app organization name matches the Sailjail permission whitelist
+- the key storage context object no longer collides with QtQuick's built-in `Keys`
+- the settings page now shows key-save errors instead of clearing the field silently
+- placeholder app icons are included so packaging succeeds
+
 ### Building for the device
 
 Needs the Sailfish SDK (`sfdk`, from docs.sailfishos.org). It is available for
@@ -120,6 +130,16 @@ QML-Oberfläche blendet den Rest aus.
 
 Der Trunk ist immer Harbour-konform. Das Full-Target fügt ausschliesslich hinzu
 und entfernt nie etwas — der Store-Build kann dadurch nicht brechen.
+
+### First-Run-Fixes
+
+Dieser Commit behebt mehrere Probleme beim ersten Start im Sailfish-Emulator:
+
+- die Haupt-QML-Datei wird für beide Targets nun korrekt geladen
+- der Organisationsname der App passt jetzt zur Sailjail-Whitelist
+- das Kontextobjekt für den Schlüsselspeicher kollidiert nicht mehr mit dem eingebauten QtQuick-Property `Keys`
+- die Einstellungsseite zeigt Fehler beim Speichern des Schlüssels an, statt das Feld stillschweigend zu leeren
+- Platzhalter-Icons sind enthalten, damit das Packaging erfolgreich durchläuft
 
 ### Für das Gerät bauen
 
