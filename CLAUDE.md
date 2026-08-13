@@ -42,7 +42,9 @@ Erlaubt und genutzt:
 - `Sailfish.Secrets 1.0` + Permission `Secrets` — API-Key-Ablage
 - `org.nemomobile.contacts 1.0` + Permission `Contacts` — read-only
 - `org.kde.bluezqt 1.0` + Permission `Bluetooth`
-- `org.freedesktop.contextkit 1.0` — Akku, Netz  ⚠️ Property-Namen auf Gerät prüfen
+- Akku/Netz: `/sys/class/power_supply` + `QNetworkInterface` statt ContextKit
+  — im SDK-Sysroot gibt es nur das QML-Modul `org.freedesktop.contextkit 1.0`,
+  keine C++-API; sysfs ist world-readable, keine Extra-Permission nötig
 - `Sailfish.Telephony 1.0` ⚠️ Umfang unklar, keine Backwards-Compat-Garantie
 - `Nemo.Notifications 1.0` — nur SENDEN
 - `Nemo.KeepAlive 1.2` — Request zu Ende bringen, solange App läuft
@@ -89,40 +91,29 @@ Geraet Qt 5.6. Ein gruener Lauf ersetzt `sfdk build` nicht, deshalb in
 
 ## Nächster Schritt
 
-Harbour-Build laeuft auf echter Hardware: Test-Key eingegeben, Speicherabfrage
-per Tool-Call gegen ein Cloud-Modell (OpenRouter) fehlerfrei durchgelaufen.
-Der Tool-Roundtrip ist damit erstmals ausserhalb des Fake-Backends
-(`tests/tst_toolroundtrip.cpp`) verifiziert — ein echtes Modell beantwortet
-die Schemas so, wie die Spec es verspricht.
+`get_battery_status`/`get_network_status` waren in beiden Providern
+(`SandboxedProvider` UND `FullProvider`) reine `not_implemented`-Stubs.
+Beide jetzt identisch implementiert (sysfs + `QNetworkInterface`, s.o.) —
+kein Codepfad-Unterschied zwischen Harbour und Full, wie
+Architekturentscheidung 2 es verlangt. Auf echter Hardware (Jolla Phone
+2026, aarch64) headless verifiziert: ein Testharness linkt `Capabilities`
++ `ConsentGate` + `ToolRegistry` + den jeweiligen Provider direkt (ohne
+QML/AIClient/Netzwerk) und ruft `ToolRegistry::invoke()` — denselben Pfad,
+den ein echter Tool-Call durchläuft. Dabei zwei Gerätebugs gefangen, die
+der Desktop-Build (Qt 5.15) nicht zeigt:
+- `QNetworkInterface::type()`/`Loopback` gibt es erst ab Qt 5.11; das
+  Gerät läuft Qt 5.6 → über `IsLoopBack`-Flag gelöst.
+- Der MTK-Fuel-Gauge-Treiber liefert `time_to_full_now` vor eingeschwungener
+  Kalibrierung gelegentlich einen unplausiblen Rohwert (beobachtet: 940h) →
+  auf ein 24h-Fenster gekappt statt durchgereicht.
 
-`ToolRegistry::buildManifest()` registrierte bis eben nur TODO-Stubs fuer die
-Full-Target-Tools — Harbour und Full hatten dasselbe Manifest. Jetzt
-registriert (alle default aus, Bestaetigung ab Personal/Critical):
-`get_upcoming_events` (Personal, libmkcal-qt5), `read_recent_messages`
-(Critical, libcommhistory-qt5), `run_command` (Critical, QProcess ohne
-Shell — bewusst ausserhalb des in `docs/konzept-v2.md` dokumentierten
-M4-Scopes, auf expliziten Wunsch ergaenzt trotz des Risikos, dass ein Modell
-beliebige Programme mit App-Rechten ausfuehren kann; einziger Schutz ist
-ConsentGate::Critical + Default-aus, keine Allow-/Blocklist).
+Version auf 0.6.0 (Minor, da Full-Access-Verhalten sich ändert).
 
-Das Full-Access-RPM war trotz vorhandener Laufzeit-Libs nicht installierbar:
-`rpm/sailfishai.spec` verlangte `Requires: libmkcal-qt5` — dieses Paket
-existiert unter diesem Namen nicht auf Sailfish OS, das echte Laufzeitpaket
-heisst `mkcal-qt5` (nur die `.pc`-Datei fuer die Build-Zeit heisst
-`libmkcal-qt5.pc`, `BuildRequires: pkgconfig(libmkcal-qt5)` war deshalb
-schon immer richtig). Gefixt (Commit 95d5da6), per direktem `rpm -Uvh` auf
-dem SDK-Emulator bestaetigt — installiert und startet jetzt sauber, kein
-Absturz, Cover-UI rendert korrekt.
-
-Offen: der volle In-App-Ablauf im Full-Access-Build (Tool-Consent erteilen,
-Nachricht senden) ist noch nicht durchgeklickt — der SDK-Emulator hat hier
-keine Maus-/Touch-Simulation, nur `sfdk emulator` + `VBoxManage screenshotpng`
-per Root-SSH (siehe Memory `reference-emulator-headless-testing`). Braucht
-entweder ein echtes Geraet oder VRDE+RDP-Client. Danach: lokales Modell via
-`llama-server` durchspielen — bisher nur Cloud-Pfad getestet — dann M3.
-
-`KeyStore` legt den Key derzeit als Datei mit 0600 ab. Das ist die
-Full-Target-Variante — vor einem Store-Upload muss M3 auf Sailfish.Secrets
-umstellen.
+**Nächste Ziele:**
+1. Konversationslisten-Vorschau überlappt sich — jede Konversation in der
+   Liste (`MainPage.qml`, vermutlich derselbe Delegate-Bereich wie der
+   bereits gefixte Ghost-Text-Bug) auf eine Zeile begrenzen.
+2. Setting für ein Default-Modell ergänzen, statt bei jedem Start/Neuer
+   Konversation manuell wählen zu müssen.
 
 Detailkonzept: `docs/konzept-v2.md`

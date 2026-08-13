@@ -3,6 +3,9 @@
 #include <QDBusReply>
 #include <QProcess>
 #include <QStorageInfo>
+#include <QNetworkInterface>
+#include <QFile>
+#include <QDir>
 
 #include <CommHistory/Event>
 #include <CommHistory/Group>
@@ -16,17 +19,87 @@
 
 FullProvider::FullProvider(QObject *parent) : ISystemProvider(parent) {}
 
-QVariantMap FullProvider::batteryStatus()
+// Liest eine einzeilige sysfs-Datei; leerer String, wenn sie fehlt oder kein
+// Wert vorliegt (z.B. time_to_empty_now auf Geräten ohne Fuel-Gauge-Support).
+static QString readSysfsLine(const QString &path)
 {
-    // TODO M4: UPower DisplayDevice-Properties auslesen
-    //   QDBusInterface("org.freedesktop.UPower",
-    //                  "/org/freedesktop/UPower/devices/DisplayDevice",
-    //                  "org.freedesktop.DBus.Properties",
-    //                  QDBusConnection::systemBus())
-    return QVariantMap{{"error", "not_implemented"}};
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) return QString();
+    return QString::fromUtf8(f.readLine()).trimmed();
 }
 
-QVariantMap FullProvider::networkStatus()   { return QVariantMap{{"error","not_implemented"}}; }
+QVariantMap FullProvider::batteryStatus()
+{
+    // Kein UPower auf der Zielhardware verifiziert; sysfs ist auch unsandboxed
+    // world-readable und bereits auf Gerät getestet (SandboxedProvider).
+    QString batteryDir;
+    for (const QString &name : QDir("/sys/class/power_supply").entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        const QString base = "/sys/class/power_supply/" + name + "/";
+        if (readSysfsLine(base + "type") == "Battery") {
+            batteryDir = base;
+            break;
+        }
+    }
+    if (batteryDir.isEmpty()) return QVariantMap{{"error", "not_implemented"}};
+
+    const QString capacity = readSysfsLine(batteryDir + "capacity");
+    const QString status   = readSysfsLine(batteryDir + "status");
+    if (capacity.isEmpty() || status.isEmpty()) return QVariantMap{{"error", "not_implemented"}};
+
+    QVariantMap out{
+        {"percentage", capacity.toInt()},
+        {"charging",   status == "Charging"},
+        {"status",     status}
+    };
+
+    // Manche Fuel-Gauge-Treiber (beobachtet: MTK) liefern hier gelegentlich
+    // einen stehengebliebenen/unplausiblen Rohwert statt 0, bevor die
+    // Kalibrierung eingeschwungen ist -> auf einen plausiblen Bereich für
+    // ein Telefon kappen (max. 24h), statt Kernel-Rauschen weiterzureichen.
+    const qint64 maxPlausibleMinutes = 24 * 60;
+    const QString timeToFull  = readSysfsLine(batteryDir + "time_to_full_now");
+    const QString timeToEmpty = readSysfsLine(batteryDir + "time_to_empty_now");
+    if (status == "Charging" && !timeToFull.isEmpty()) {
+        const qint64 minutes = timeToFull.toLongLong() / 60;
+        if (minutes > 0 && minutes <= maxPlausibleMinutes) out.insert("timeRemainingMinutes", minutes);
+    } else if (status == "Discharging" && !timeToEmpty.isEmpty()) {
+        const qint64 minutes = timeToEmpty.toLongLong() / 60;
+        if (minutes > 0 && minutes <= maxPlausibleMinutes) out.insert("timeRemainingMinutes", minutes);
+    }
+    return out;
+}
+
+QVariantMap FullProvider::networkStatus()
+{
+    for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {
+        const auto flags = iface.flags();
+        if (flags & QNetworkInterface::IsLoopBack) continue;
+        if (!(flags & QNetworkInterface::IsUp) || !(flags & QNetworkInterface::IsRunning)) continue;
+
+        QString ip;
+        for (const QNetworkAddressEntry &entry : iface.addressEntries()) {
+            if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol && !entry.ip().isLoopback()) {
+                ip = entry.ip().toString();
+                break;
+            }
+        }
+        if (ip.isEmpty()) continue;
+
+        const QString name = iface.name();
+        QString type = "other";
+        if (name.startsWith("wlan"))                                type = "wifi";
+        else if (name.startsWith("ccmni") || name.startsWith("rmnet")) type = "mobile";
+        else if (name.startsWith("usb") || name.startsWith("eth") || name.startsWith("enp")) type = "ethernet";
+
+        return QVariantMap{
+            {"connected", true},
+            {"type",      type},
+            {"interface", name},
+            {"ipAddress", ip}
+        };
+    }
+    return QVariantMap{{"connected", false}, {"type", "none"}};
+}
 
 QVariantMap FullProvider::storageStatus()
 {

@@ -34,6 +34,17 @@ This commit fixes several issues that affected the first launch on the Sailfish 
 - the settings page now shows key-save errors instead of clearing the field silently
 - placeholder app icons are included so packaging succeeds
 
+### Battery and network status
+
+`get_battery_status` and `get_network_status` were `not_implemented` stubs in
+both providers until now — there's no C++ ContextKit package in the SDK
+sysroot (only its QML module), so both read `/sys/class/power_supply`
+directly (percentage, charging state, and a plausibility-capped time
+estimate) and use `QNetworkInterface` for connection type/IP. Identical
+implementation in both targets, verified on real device hardware (Jolla
+Phone 2026) through a headless harness that calls the same
+`ToolRegistry::invoke()` path a real tool call takes.
+
 ### Full-access tools
 
 Beyond Harbour's tool set, the full-access build (`sailfishai`) adds three
@@ -170,6 +181,17 @@ Dieser Commit behebt mehrere Probleme beim ersten Start im Sailfish-Emulator:
 - das Kontextobjekt für den Schlüsselspeicher kollidiert nicht mehr mit dem eingebauten QtQuick-Property `Keys`
 - die Einstellungsseite zeigt Fehler beim Speichern des Schlüssels an, statt das Feld stillschweigend zu leeren
 - Platzhalter-Icons sind enthalten, damit das Packaging erfolgreich durchläuft
+
+### Akku- und Netzwerkstatus
+
+`get_battery_status` und `get_network_status` waren bisher in beiden
+Providern reine `not_implemented`-Stubs — im SDK-Sysroot gibt es kein
+C++-ContextKit-Paket, nur dessen QML-Modul. Beide lesen jetzt direkt
+`/sys/class/power_supply` (Prozent, Ladezustand, plausibilitätsgekappte
+Restzeit) und nutzen `QNetworkInterface` für Verbindungstyp/IP. Identische
+Implementierung in beiden Targets, verifiziert auf echter Gerätehardware
+(Jolla Phone 2026) über ein headless Testharness, das denselben
+`ToolRegistry::invoke()`-Pfad aufruft wie ein echter Tool-Call.
 
 ### Tools im Vollzugriffs-Build
 

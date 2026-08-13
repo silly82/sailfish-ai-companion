@@ -7,8 +7,10 @@
  * Full-Access-Implementierung für OpenRepos. Läuft unsandboxed.
  *
  * Kanäle:
- *   Akku      -> org.freedesktop.UPower (QtDBus, System-Bus)
- *   Netz      -> net.connman
+ *   Akku      -> /sys/class/power_supply (wie SandboxedProvider — kein
+ *                UPower auf diesem Gerät verifiziert, sysfs ist unsandboxed
+ *                genauso zugänglich und bereits auf Zielhardware getestet)
+ *   Netz      -> QNetworkInterface (wie SandboxedProvider, s.o.)
  *   Telefonie -> org.ofono
  *   Bluetooth -> org.bluez
  *   SMS/Calls -> libcommhistory
