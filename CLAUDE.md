@@ -104,10 +104,21 @@ Shell — bewusst ausserhalb des in `docs/konzept-v2.md` dokumentierten
 M4-Scopes, auf expliziten Wunsch ergaenzt trotz des Risikos, dass ein Modell
 beliebige Programme mit App-Rechten ausfuehren kann; einziger Schutz ist
 ConsentGate::Critical + Default-aus, keine Allow-/Blocklist).
-Compile-verifiziert fuer aarch64+i486, noch nicht auf echtem Geraet getestet.
 
-Offen: Full-Access-Target (inkl. der drei neuen Tools) auf dem Geraet
-testen — bisher nur Harbour verifiziert —, lokales Modell via
+Das Full-Access-RPM war trotz vorhandener Laufzeit-Libs nicht installierbar:
+`rpm/sailfishai.spec` verlangte `Requires: libmkcal-qt5` — dieses Paket
+existiert unter diesem Namen nicht auf Sailfish OS, das echte Laufzeitpaket
+heisst `mkcal-qt5` (nur die `.pc`-Datei fuer die Build-Zeit heisst
+`libmkcal-qt5.pc`, `BuildRequires: pkgconfig(libmkcal-qt5)` war deshalb
+schon immer richtig). Gefixt (Commit 95d5da6), per direktem `rpm -Uvh` auf
+dem SDK-Emulator bestaetigt — installiert und startet jetzt sauber, kein
+Absturz, Cover-UI rendert korrekt.
+
+Offen: der volle In-App-Ablauf im Full-Access-Build (Tool-Consent erteilen,
+Nachricht senden) ist noch nicht durchgeklickt — der SDK-Emulator hat hier
+keine Maus-/Touch-Simulation, nur `sfdk emulator` + `VBoxManage screenshotpng`
+per Root-SSH (siehe Memory `reference-emulator-headless-testing`). Braucht
+entweder ein echtes Geraet oder VRDE+RDP-Client. Danach: lokales Modell via
 `llama-server` durchspielen — bisher nur Cloud-Pfad getestet — dann M3.
 
 `KeyStore` legt den Key derzeit als Datei mit 0600 ab. Das ist die
