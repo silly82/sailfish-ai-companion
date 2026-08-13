@@ -28,8 +28,8 @@ Systemintegration ueber Harbour-konforme APIs.
 %setup -q -n %{name}-%{version}
 
 %build
-%qtc_qmake5 CONFIG+=harbour
-%qtc_make %{?_smp_mflags}
+%qmake5 CONFIG+=harbour
+%make_build
 
 %install
 %qmake5_install

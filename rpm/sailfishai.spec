@@ -28,8 +28,8 @@ ueber das Paket sailfishai-llama.
 %setup -q -n %{name}-%{version}
 
 %build
-%qtc_qmake5 CONFIG+=fullaccess
-%qtc_make %{?_smp_mflags}
+%qmake5 CONFIG+=fullaccess
+%make_build
 
 %install
 %qmake5_install
