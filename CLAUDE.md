@@ -89,13 +89,15 @@ Geraet Qt 5.6. Ein gruener Lauf ersetzt `sfdk build` nicht, deshalb in
 
 ## Nächster Schritt
 
-M1 und M2 sind implementiert, aber noch auf keinem Geraet gelaufen. Offen:
-`sfdk build` gegen beide Targets, Chat mit echtem Key auf dem Geraet testen —
-inklusive eines Modells, das Function-Calling wirklich beherrscht — dann M3.
+Harbour-Build laeuft auf echter Hardware: Test-Key eingegeben, Speicherabfrage
+per Tool-Call gegen ein Cloud-Modell (OpenRouter) fehlerfrei durchgelaufen.
+Der Tool-Roundtrip ist damit erstmals ausserhalb des Fake-Backends
+(`tests/tst_toolroundtrip.cpp`) verifiziert — ein echtes Modell beantwortet
+die Schemas so, wie die Spec es verspricht.
 
-Der Tool-Roundtrip ist auf dem Desktop gegen ein Fake-Backend abgedeckt
-(`tests/tst_toolroundtrip.cpp`). Was dort nicht auffaellt: ob ein echtes
-Modell die Schemas so beantwortet, wie die Spec es verspricht.
+Offen: Full-Access-Target auf dem Geraet testen (bisher nur Harbour
+verifiziert), lokales Modell via `llama-server` durchspielen — bisher nur
+Cloud-Pfad getestet — dann M3.
 
 `KeyStore` legt den Key derzeit als Datei mit 0600 ab. Das ist die
 Full-Target-Variante — vor einem Store-Upload muss M3 auf Sailfish.Secrets
