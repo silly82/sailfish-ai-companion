@@ -7,7 +7,9 @@
  * Harbour-konforme Implementierung.
  *
  * Erlaubte Kanäle (geprüft gegen docs.sailfishos.org, Stand 4.5.0/5.1):
- *   Akku/Netz   -> org.freedesktop.contextkit 1.0   ⚠️ Property-Namen auf Gerät verifizieren
+ *   Akku/Netz   -> /sys/class/power_supply, /sys/class/net + QNetworkInterface
+ *                  (org.freedesktop.contextkit 1.0 bietet nur ein QML-Modul,
+ *                  keine C++-API im SDK-Sysroot — daher sysfs statt ContextKit)
  *   Kontakte    -> org.nemomobile.contacts 1.0      (Permission: Contacts)
  *   Bluetooth   -> org.kde.bluezqt 1.0              (Permission: Bluetooth)
  *   Storage     -> QStorageInfo, nur zugängliche Mounts
