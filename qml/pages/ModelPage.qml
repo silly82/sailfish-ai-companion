@@ -51,8 +51,8 @@ Page {
         ViewPlaceholder {
             enabled: view.count === 0
             text: qsTr("Keine Modelle geladen")
-            hintText: Keys.hasKey ? qsTr("Liste wird abgerufen")
-                                  : qsTr("Zuerst einen API-Key hinterlegen")
+            hintText: KeyStore.hasKey ? qsTr("Liste wird abgerufen")
+                                      : qsTr("Zuerst einen API-Key hinterlegen")
         }
 
         VerticalScrollDecorator {}
