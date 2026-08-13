@@ -45,6 +45,16 @@ implementation in both targets, verified on real device hardware (Jolla
 Phone 2026) through a headless harness that calls the same
 `ToolRegistry::invoke()` path a real tool call takes.
 
+### UI fixes and default model
+
+The conversation list preview could overlap the next row when the last
+message spanned multiple lines — `ConversationStore` now collapses it to a
+single line (`.simplified()`), with `maximumLineCount: 1` in `MainPage.qml`
+as a second safeguard. The Settings page also gained a "Default model" entry
+that shows the currently selected model and opens the model picker — the
+choice already persisted across restarts, it just had no way to be reached
+before starting a chat.
+
 ### Full-access tools
 
 Beyond Harbour's tool set, the full-access build (`sailfishai`) adds three
@@ -192,6 +202,17 @@ Restzeit) und nutzen `QNetworkInterface` für Verbindungstyp/IP. Identische
 Implementierung in beiden Targets, verifiziert auf echter Gerätehardware
 (Jolla Phone 2026) über ein headless Testharness, das denselben
 `ToolRegistry::invoke()`-Pfad aufruft wie ein echter Tool-Call.
+
+### UI-Fixes und Standardmodell
+
+Die Konversationslisten-Vorschau konnte die nächste Zeile überlappen, wenn
+die letzte Nachricht mehrzeilig war — `ConversationStore` fasst sie jetzt zu
+einer Zeile zusammen (`.simplified()`), mit `maximumLineCount: 1` in
+`MainPage.qml` als zweiter Absicherung. Die Einstellungsseite hat ausserdem
+einen neuen Eintrag „Standardmodell" bekommen, der das aktuell gewählte
+Modell zeigt und die Modellauswahl öffnet — die Wahl war schon vorher über
+Neustarts hinweg persistent, war aber ohne einen offenen Chat nicht
+erreichbar.
 
 ### Tools im Vollzugriffs-Build
 

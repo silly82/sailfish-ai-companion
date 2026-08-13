@@ -63,6 +63,7 @@ Page {
                 Label {
                     width: parent.width
                     truncationMode: TruncationMode.Fade
+                    maximumLineCount: 1
                     font.pixelSize: Theme.fontSizeExtraSmall
                     color: Theme.secondaryColor
                     text: modelData.preview.length

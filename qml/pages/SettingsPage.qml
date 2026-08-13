@@ -58,6 +58,15 @@ Page {
                 onKeyChanged: if (KeyStore.hasKey) keyStatus.show(qsTr("Key gespeichert"), false)
             }
 
+            SectionHeader { text: qsTr("Modell") }
+
+            ValueButton {
+                width: parent.width
+                label: qsTr("Standardmodell")
+                value: AI.model.length ? AI.model : qsTr("Keines ausgewählt")
+                onClicked: pageStack.push(Qt.resolvedUrl("ModelPage.qml"))
+            }
+
             TextSwitch {
                 text: qsTr("Nur lokal")
                 description: qsTr("Lokales Modell verwenden. Nichts verlässt das Gerät, "

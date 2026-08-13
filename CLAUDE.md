@@ -107,13 +107,23 @@ der Desktop-Build (Qt 5.15) nicht zeigt:
   Kalibrierung gelegentlich einen unplausiblen Rohwert (beobachtet: 940h) →
   auf ein 24h-Fenster gekappt statt durchgereicht.
 
-Version auf 0.6.0 (Minor, da Full-Access-Verhalten sich ändert).
+Konversationslisten-Vorschau überlappte sich: `ConversationStore::conversations()`
+gab den rohen `content` der letzten Nachricht ungefiltert als `preview`
+zurück. Bei mehrzeiligen Nachrichten sprengte das die feste Zeilenhöhe von
+`MainPage.qml`s `ListItem` und überlappte mit der nächsten Zeile. Fix an der
+Quelle (`.simplified()` fasst Zeilenumbrüche/Whitespace-Läufe zu je einem
+Leerzeichen zusammen) plus `maximumLineCount: 1` auf dem Preview-`Label` als
+zweite Absicherung. Verifiziert über dasselbe Headless-Harness-Muster: Store
+direkt verlinkt, mehrzeilige Testnachricht eingefügt, `preview` enthält
+nachweislich kein `\n` mehr.
 
-**Nächste Ziele:**
-1. Konversationslisten-Vorschau überlappt sich — jede Konversation in der
-   Liste (`MainPage.qml`, vermutlich derselbe Delegate-Bereich wie der
-   bereits gefixte Ghost-Text-Bug) auf eine Zeile begrenzen.
-2. Setting für ein Default-Modell ergänzen, statt bei jedem Start/Neuer
-   Konversation manuell wählen zu müssen.
+Settings-Seite hatte keinen Weg, ein Modell zu wählen, bevor man den ersten
+Chat öffnet — `AI.model` war zwar schon über `QSettings` persistent (jede
+Auswahl in `ModelPage.qml` überlebt einen Neustart), aber nur aus einem
+laufenden Chat heraus erreichbar. Jetzt zusätzlich ein `ValueButton` in
+`SettingsPage.qml`, der das aktuelle Modell zeigt und `ModelPage.qml` öffnet.
+Kein neuer C++-Code nötig — Persistenz existierte schon in `AIClient::setModel()`.
+
+Version auf 0.6.5.
 
 Detailkonzept: `docs/konzept-v2.md`

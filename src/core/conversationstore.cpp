@@ -372,7 +372,11 @@ QVariantList ConversationStore::conversations() const
         row[QStringLiteral("title")]          = q.value(1).toString();
         row[QStringLiteral("createdAt")]      = q.value(2).toString();
         row[QStringLiteral("messageCount")]   = q.value(3).toInt();
-        row[QStringLiteral("preview")]        = q.value(4).toString();
+        // simplified() collapses newlines/runs of whitespace to single spaces —
+        // the preview must fit MainPage's one-line list delegate, and a raw
+        // multi-line message would otherwise overflow the fixed row height
+        // and visually overlap the next entry.
+        row[QStringLiteral("preview")]        = q.value(4).toString().simplified();
         out.append(row);
     }
     return out;
