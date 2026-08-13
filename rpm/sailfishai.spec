@@ -8,7 +8,7 @@ Source0:    %{name}-%{version}.tar.bz2
 
 Requires:   sailfishsilica-qt5 >= 0.10.9
 Requires:   libcommhistory-qt5
-Requires:   libmkcal-qt5
+Requires:   mkcal-qt5
 Recommends: sailfishai-llama
 
 BuildRequires: pkgconfig(sailfishapp) >= 1.0.2
