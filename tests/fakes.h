@@ -40,6 +40,7 @@ public:
 
     QVariantMap recentMessages(int) override { return QVariantMap{}; }
     QVariantMap upcomingEvents(int) override { return QVariantMap{}; }
+    QVariantMap runCommand(const QString &, const QStringList &) override { return QVariantMap{}; }
 
     QString lastQuery;
 };

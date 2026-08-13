@@ -29,6 +29,7 @@ public:
     QVariantMap findContact(const QString &query) override;
     QVariantMap recentMessages(int limit) override;
     QVariantMap upcomingEvents(int days) override;
+    QVariantMap runCommand(const QString &command, const QStringList &args) override;
 };
 
 #endif

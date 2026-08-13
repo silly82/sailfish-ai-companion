@@ -28,6 +28,7 @@ public:
 
     QVariantMap recentMessages(int) override { return unsupported(); }
     QVariantMap upcomingEvents(int) override { return unsupported(); }
+    QVariantMap runCommand(const QString &, const QStringList &) override { return unsupported(); }
 
 private:
     static QVariantMap unsupported();

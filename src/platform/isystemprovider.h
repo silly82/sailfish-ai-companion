@@ -2,6 +2,7 @@
 #define SFAI_ISYSTEMPROVIDER_H
 
 #include <QObject>
+#include <QStringList>
 #include <QVariantMap>
 
 /*!
@@ -28,6 +29,7 @@ public:
     // Nur fullaccess — sandboxed liefert {"error":"unsupported"}
     virtual QVariantMap recentMessages(int limit)  = 0;
     virtual QVariantMap upcomingEvents(int days)   = 0;
+    virtual QVariantMap runCommand(const QString &command, const QStringList &args) = 0;
 
 signals:
     void batteryChanged();
