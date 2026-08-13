@@ -20,6 +20,7 @@ BuildRequires: pkgconfig(Qt5Sql)
 BuildRequires: pkgconfig(Qt5DBus)
 BuildRequires: pkgconfig(commhistory-qt5)
 BuildRequires: pkgconfig(libmkcal-qt5)
+BuildRequires: pkgconfig(KF5CalendarCore)
 
 %description
 Vollzugriffs-Variante fuer OpenRepos. Laeuft unsandboxed und bietet

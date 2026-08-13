@@ -54,7 +54,7 @@ harbour {
 fullaccess {
     SOURCES += src/platform/full/fullprovider.cpp
     HEADERS += src/platform/full/fullprovider.h
-    PKGCONFIG += commhistory-qt5 libmkcal-qt5
+    PKGCONFIG += commhistory-qt5 libmkcal-qt5 KF5CalendarCore
 }
 
 DISTFILES += \
