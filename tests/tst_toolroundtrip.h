@@ -15,6 +15,7 @@ private slots:
     void stopsAfterTooManyToolRounds();
     void deniedConsentReachesTheModel();
     void grantedConsentRunsTheToolRedacted();
+    void criticalToolRoundtripsAfterConsent();
 };
 
 #endif

@@ -205,3 +205,26 @@ void TestToolRoundtrip::grantedConsentRunsTheToolRedacted()
     QCOMPARE(f.gate.restore(QStringLiteral("<contact:1>")),
              QStringLiteral("+41 79 123 45 67"));
 }
+
+void TestToolRoundtrip::criticalToolRoundtripsAfterConsent()
+{
+    // Critical laeuft durch denselben Consent-Pfad wie Personal — die
+    // Registry unterscheidet beim Ausfuehren nicht zwischen den Stufen
+    // oberhalb Low, nur ConsentGate::requiresConfirmation() tut es.
+    Fixture f;
+    f.registry.setToolEnabled(QStringLiteral("run_command"), true);
+    f.backend.script.append({QString(),
+                             {{"c1", "run_command", {{"command", "ls"}}}}});
+    f.backend.script.append({QStringLiteral("Fertig."), {}});
+
+    f.send(QStringLiteral("Zeig mir das Verzeichnis"));
+    QCOMPARE(f.backend.requests.size(), 1);
+
+    f.client.resolveConsent(true);
+
+    QCOMPARE(f.provider.lastCommand, QStringLiteral("ls"));
+    QCOMPARE(f.backend.requests.size(), 2);
+    const QString content =
+        f.messageAt(1, -1).value(QStringLiteral("content")).toString();
+    QVERIFY(content.contains(QStringLiteral("ok")));
+}

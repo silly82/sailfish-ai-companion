@@ -55,11 +55,12 @@ void TestToolRegistry::registersLowToolsEnabled()
     QVERIFY(f.registry.contains(QStringLiteral("get_network_status")));
     QVERIFY(f.registry.contains(QStringLiteral("get_storage_status")));
 
-    // Personenbezogenes ist registriert, aber ab Werk aus.
+    // Personenbezogenes und Kritisches ist registriert, aber ab Werk aus.
     QVERIFY(f.registry.contains(QStringLiteral("find_contact")));
+    QVERIFY(f.registry.contains(QStringLiteral("get_upcoming_events")));
+    QVERIFY(f.registry.contains(QStringLiteral("read_recent_messages")));
+    QVERIFY(f.registry.contains(QStringLiteral("run_command")));
     QCOMPARE(f.registry.activeToolCount(), 4);
-
-    QVERIFY(!f.registry.contains(QStringLiteral("run_command")));
 }
 
 void TestToolRegistry::schemaKeepsRegistrationOrder()
@@ -180,4 +181,48 @@ void TestToolRegistry::togglePersistsAcrossInstances()
     Fixture again;
     QVERIFY(!schemaNames(again.registry.toolSchema())
                  .contains(QStringLiteral("get_network_status")));
+}
+
+void TestToolRegistry::criticalToolRequiresConsentEvenWhenEnabled()
+{
+    Fixture f;
+    f.registry.setToolEnabled(QStringLiteral("run_command"), true);
+
+    const QVariantMap denied =
+        f.registry.invoke(QStringLiteral("run_command"),
+                          QVariantMap{{"command", "ls"}});
+    QCOMPARE(denied.value(QStringLiteral("error")).toString(),
+             QStringLiteral("consent_required"));
+    // Ohne Freigabe darf der Handler nicht einmal gelaufen sein.
+    QVERIFY(f.provider.lastCommand.isEmpty());
+
+    f.registry.grantConsent(QStringLiteral("run_command"));
+    const QVariantMap out =
+        f.registry.invoke(QStringLiteral("run_command"),
+                          QVariantMap{{"command", "ls"},
+                                      {"args", QVariantList{"-la"}}});
+    QCOMPARE(f.provider.lastCommand, QStringLiteral("ls"));
+    QCOMPARE(f.provider.lastArgs, QStringList{"-la"});
+    QVERIFY(!out.contains(QStringLiteral("error")));
+}
+
+void TestToolRegistry::calendarToolUsesPersonalSensitivity()
+{
+    // Die Einstufung entscheidet, ob ein Tool per Default-aus + Bestaetigung
+    // (ab Personal) laeuft — ConsentGate::Sensitivity dokumentiert die
+    // Zuordnung: Kalender ist Personal, SMS und Prozessausfuehrung Critical.
+    Fixture f;
+    QVariantMap byName;
+    for (const QVariant &v : f.registry.tools())
+        byName.insert(v.toMap().value(QStringLiteral("name")).toString(), v);
+
+    QCOMPARE(byName.value(QStringLiteral("get_upcoming_events")).toMap()
+                 .value(QStringLiteral("sensitivity")).toInt(),
+             static_cast<int>(ConsentGate::Personal));
+    QCOMPARE(byName.value(QStringLiteral("read_recent_messages")).toMap()
+                 .value(QStringLiteral("sensitivity")).toInt(),
+             static_cast<int>(ConsentGate::Critical));
+    QCOMPARE(byName.value(QStringLiteral("run_command")).toMap()
+                 .value(QStringLiteral("sensitivity")).toInt(),
+             static_cast<int>(ConsentGate::Critical));
 }

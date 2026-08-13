@@ -19,6 +19,8 @@ private slots:
     void leavesLowResultUntouched();
     void disablingRevokesConsent();
     void togglePersistsAcrossInstances();
+    void criticalToolRequiresConsentEvenWhenEnabled();
+    void calendarToolUsesPersonalSensitivity();
 };
 
 #endif

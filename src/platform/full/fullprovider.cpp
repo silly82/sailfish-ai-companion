@@ -4,6 +4,16 @@
 #include <QProcess>
 #include <QStorageInfo>
 
+#include <CommHistory/Event>
+#include <CommHistory/Group>
+#include <CommHistory/GroupModel>
+
+#include <extendedcalendar.h>
+#include <sqlitestorage.h>
+
+#include <algorithm>
+#include <QTimeZone>
+
 FullProvider::FullProvider(QObject *parent) : ISystemProvider(parent) {}
 
 QVariantMap FullProvider::batteryStatus()
@@ -40,10 +50,71 @@ QVariantMap FullProvider::findContact(const QString &query)
 { Q_UNUSED(query) return QVariantMap{{"error","not_implemented"}}; }
 
 QVariantMap FullProvider::recentMessages(int limit)
-{ Q_UNUSED(limit) return QVariantMap{{"error","not_implemented"}}; }  // libcommhistory
+{
+    // CommHistory::Group ist pro Konversation, nicht pro Nachricht — es gibt
+    // keinen flachen "alle Events aller Konversationen"-Zugriff in dieser
+    // API. lastMessageText()/endTime() liefern aber genau die letzte
+    // Nachricht je Gespraech, was fuer "juengste Nachrichten" reicht, ohne
+    // fuer jede Konversation einzeln ein ConversationModel abzufragen.
+    CommHistory::GroupModel model;
+    model.setQueryMode(CommHistory::EventModel::SyncQuery);
+    if (!model.getGroups())
+        return QVariantMap{{"error", "query_failed"}};
+
+    QVector<CommHistory::Group> smsGroups;
+    for (int i = 0; i < model.rowCount(); ++i) {
+        const CommHistory::Group g = model.group(model.index(i, 0));
+        if (g.lastEventType() == CommHistory::Event::SMSEvent)
+            smsGroups.append(g);
+    }
+    std::sort(smsGroups.begin(), smsGroups.end(),
+              [](const CommHistory::Group &a, const CommHistory::Group &b) {
+                  return a.endTime() > b.endTime();
+              });
+    if (smsGroups.size() > limit)
+        smsGroups.resize(limit);
+
+    QVariantList out;
+    for (const CommHistory::Group &g : smsGroups) {
+        const QStringList senders = g.recipients().remoteUids();
+        out.append(QVariantMap{
+            {"sender",    senders.isEmpty() ? QString() : senders.first()},
+            {"timestamp", g.endTime().toString(Qt::ISODate)},
+            {"text",      g.lastMessageText()}
+        });
+    }
+    return QVariantMap{{"messages", out}};
+}
 
 QVariantMap FullProvider::upcomingEvents(int days)
-{ Q_UNUSED(days) return QVariantMap{{"error","not_implemented"}}; }   // libmkcal
+{
+    const QDate start = QDate::currentDate();
+    const QDate end = start.addDays(days);
+
+    mKCal::ExtendedCalendar::Ptr calendar(
+        new mKCal::ExtendedCalendar(QTimeZone::systemTimeZone()));
+    mKCal::ExtendedStorage::Ptr storage(new mKCal::SqliteStorage(calendar));
+
+    if (!storage->open() || !storage->load(start, end)) {
+        storage->close();
+        return QVariantMap{{"error", "query_failed"}};
+    }
+
+    const KCalendarCore::Event::List events = calendar->events(start, end);
+
+    QVariantList out;
+    for (const KCalendarCore::Event::Ptr &event : events) {
+        out.append(QVariantMap{
+            {"summary",  event->summary()},
+            {"start",    event->dtStart().toString(Qt::ISODate)},
+            {"end",      event->dtEnd().toString(Qt::ISODate)},
+            {"location", event->location()}
+        });
+    }
+
+    storage->close();
+    return QVariantMap{{"events", out}};
+}
 
 QVariantMap FullProvider::runCommand(const QString &command, const QStringList &args)
 {

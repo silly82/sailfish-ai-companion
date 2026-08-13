@@ -40,9 +40,17 @@ public:
 
     QVariantMap recentMessages(int) override { return QVariantMap{}; }
     QVariantMap upcomingEvents(int) override { return QVariantMap{}; }
-    QVariantMap runCommand(const QString &, const QStringList &) override { return QVariantMap{}; }
+
+    QVariantMap runCommand(const QString &command, const QStringList &args) override
+    {
+        lastCommand = command;
+        lastArgs = args;
+        return QVariantMap{{"exitCode", 0}, {"stdout", "ok"}, {"stderr", ""}};
+    }
 
     QString lastQuery;
+    QString lastCommand;
+    QStringList lastArgs;
 };
 
 /*!

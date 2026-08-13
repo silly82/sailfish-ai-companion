@@ -126,12 +126,76 @@ void ToolRegistry::buildManifest()
                       false});
     }
 
+    if (m_caps->calendar()) {
+        registerTool({"get_upcoming_events",
+                      "Liefert anstehende Kalendertermine der nächsten Tage.",
+                      QJsonObject{
+                          {"type", "object"},
+                          {"properties", QJsonObject{
+                              {"days", QJsonObject{
+                                  {"type",        "integer"},
+                                  {"description", "Zeitraum in Tagen ab heute"}
+                              }}
+                          }},
+                          {"required", QJsonArray{"days"}}
+                      },
+                      ConsentGate::Personal,
+                      [this](QVariantMap args) {
+                          return m_provider->upcomingEvents(
+                              args.value(QStringLiteral("days")).toInt());
+                      },
+                      false});
+    }
+
     // --- Critical: nur Full-Target ---
     if (m_caps->messages()) {
-        // TODO M4: registerTool read_recent_messages
+        registerTool({"read_recent_messages",
+                      "Liefert die jüngsten SMS-Konversationen mit letzter Nachricht.",
+                      QJsonObject{
+                          {"type", "object"},
+                          {"properties", QJsonObject{
+                              {"limit", QJsonObject{
+                                  {"type",        "integer"},
+                                  {"description", "Maximale Anzahl Konversationen"}
+                              }}
+                          }},
+                          {"required", QJsonArray{"limit"}}
+                      },
+                      ConsentGate::Critical,
+                      [this](QVariantMap args) {
+                          return m_provider->recentMessages(
+                              args.value(QStringLiteral("limit")).toInt());
+                      },
+                      false});
     }
     if (m_caps->automation()) {
-        // TODO M4: registerTool run_command — höchste Sensitivity
+        registerTool({"run_command",
+                      "Führt ein Programm mit Argumenten auf dem Gerät aus und "
+                      "liefert Exit-Code sowie Ausgabe zurück.",
+                      QJsonObject{
+                          {"type", "object"},
+                          {"properties", QJsonObject{
+                              {"command", QJsonObject{
+                                  {"type",        "string"},
+                                  {"description", "Programmname oder -pfad"}
+                              }},
+                              {"args", QJsonObject{
+                                  {"type",        "array"},
+                                  {"items",       QJsonObject{{"type", "string"}}},
+                                  {"description", "Argumente"}
+                              }}
+                          }},
+                          {"required", QJsonArray{"command"}}
+                      },
+                      ConsentGate::Critical,
+                      [this](QVariantMap args) {
+                          QStringList cmdArgs;
+                          for (const QVariant &a : args.value(QStringLiteral("args")).toList())
+                              cmdArgs.append(a.toString());
+                          return m_provider->runCommand(
+                              args.value(QStringLiteral("command")).toString(), cmdArgs);
+                      },
+                      false});
     }
 
     emit toolsChanged();
