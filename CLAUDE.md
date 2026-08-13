@@ -95,9 +95,20 @@ Der Tool-Roundtrip ist damit erstmals ausserhalb des Fake-Backends
 (`tests/tst_toolroundtrip.cpp`) verifiziert — ein echtes Modell beantwortet
 die Schemas so, wie die Spec es verspricht.
 
-Offen: Full-Access-Target auf dem Geraet testen (bisher nur Harbour
-verifiziert), lokales Modell via `llama-server` durchspielen — bisher nur
-Cloud-Pfad getestet — dann M3.
+`ToolRegistry::buildManifest()` registrierte bis eben nur TODO-Stubs fuer die
+Full-Target-Tools — Harbour und Full hatten dasselbe Manifest. Jetzt
+registriert (alle default aus, Bestaetigung ab Personal/Critical):
+`get_upcoming_events` (Personal, libmkcal-qt5), `read_recent_messages`
+(Critical, libcommhistory-qt5), `run_command` (Critical, QProcess ohne
+Shell — bewusst ausserhalb des in `docs/konzept-v2.md` dokumentierten
+M4-Scopes, auf expliziten Wunsch ergaenzt trotz des Risikos, dass ein Modell
+beliebige Programme mit App-Rechten ausfuehren kann; einziger Schutz ist
+ConsentGate::Critical + Default-aus, keine Allow-/Blocklist).
+Compile-verifiziert fuer aarch64+i486, noch nicht auf echtem Geraet getestet.
+
+Offen: Full-Access-Target (inkl. der drei neuen Tools) auf dem Geraet
+testen — bisher nur Harbour verifiziert —, lokales Modell via
+`llama-server` durchspielen — bisher nur Cloud-Pfad getestet — dann M3.
 
 `KeyStore` legt den Key derzeit als Datei mit 0600 ab. Das ist die
 Full-Target-Variante — vor einem Store-Upload muss M3 auf Sailfish.Secrets
