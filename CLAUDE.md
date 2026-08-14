@@ -111,25 +111,41 @@ je einmal pro Plattform (`aarch64`, `armv7hl`, `i486`):
 - `sailfishai-X.Y.Z-1.armv7hl.rpm`
 - `sailfishai-X.Y.Z-1.i486.rpm`
 
-**`armv7hl` wird nur gebaut, nicht getestet** — kein `armv7hl`-Gerät
-vorhanden (s. Zielhardware, beide Geräte sind `aarch64`). Baut sauber gegen
-`SailfishOS-5.1.0.11-armv7hl` durch, lief aber nie auf echter Hardware.
-Sollte jemand mit einem `armv7hl`-Jolla-Gerät (z. B. Jolla 1, Jolla C) einen
-Bug melden, gilt das nicht automatisch für `aarch64` und umgekehrt.
+**`armv7hl` und `i486` werden nur gebaut, nicht getestet** — kein Gerät für
+diese Architekturen vorhanden (s. Zielhardware, beide Geräte sind `aarch64`).
+Sollte jemand mit `armv7hl`/`i486`-Hardware (z. B. Jolla 1, Jolla C, ältere
+Tablets) einen Bug melden, gilt das nicht automatisch für `aarch64` und
+umgekehrt.
 
 Tag, GitHub-Release, alle sechs RPM-Builds und der Asset-Upload gehören zum
 Versionsbump dazu — passiert automatisch, ohne dass extra danach gefragt
 werden muss. `~/SailfishOS/bin/sfdk` (nicht auf `$PATH`) hat eine laufende
-Build-Engine mit `SailfishOS-5.1.0.11` für `aarch64`/`armv7hl`/`i486`.
+Build-Engine.
 
 Stolpersteine, auf die man beim Bauen aller sechs Kombinationen trifft:
 
+- **SDK-Target-Version muss zur Sailfish-OS-Version auf dem Gerät passen —
+  nicht die neueste nehmen.** `aarch64` **immer** gegen
+  `SailfishOS-5.0.0.62-aarch64` bauen, nicht gegen das neuere
+  `SailfishOS-5.1.0.11-aarch64` (`sfdk tools list` zeigt beide; 5.1.0.11 ist
+  nur `latest`, nicht das, was auf Jolla C2 / Jolla Phone 2026 läuft). Ein
+  gegen 5.1.0.11 gebautes `aarch64`-RPM verlangt `libc.so.6(GLIBC_2.34)` —
+  zu neu fürs Gerät, `pkcon`/`zypper` bricht mit einer langen Liste
+  „Fehlgeschlagene Abhängigkeiten" ab (alle Qt5-Libs, libc, libstdc++,
+  libgcc_s gleichzeitig — daran erkennt man das Symptom sofort). Gegen
+  `5.0.0.62-aarch64` gebaut verlangt dieselbe Binary nur `GLIBC_2.17`.
+  Für `armv7hl`/`i486` gibt es lokal **kein** `5.0.0.x`-Target (nur
+  `5.0.0.62-aarch64` ist installiert) — die beiden werden zwangsläufig gegen
+  `5.1.0.11` gebaut und tragen deshalb potenziell dasselbe Risiko auf echter
+  (älterer) `armv7hl`/`i486`-Hardware. Ohne Testgerät für diese Architekturen
+  unentdeckt, bis ein zusätzliches `5.0.0.x`-SDK-Target für sie installiert
+  wird (braucht Netzwerkzugriff auf Jollas Repos, hier nicht geprüft).
 - **Config-Scope überlebt keinen neuen Shell-Aufruf.** `sfdk config target=…`
   (Session-Scope) gilt nur innerhalb desselben Shell-Prozesses — jeder
   eigenständige Tool-Aufruf startet effektiv neu und fällt sonst still auf
   die zuletzt global gesetzte Target/Spec-Kombination zurück. Stattdessen pro
   Build-Befehl explizit auf Command-Scope setzen:
-  `sfdk -c target=SailfishOS-5.1.0.11-aarch64 -c specfile=rpm/harbour-nemoai.spec build`.
+  `sfdk -c target=SailfishOS-5.0.0.62-aarch64 -c specfile=rpm/harbour-nemoai.spec build`.
 - **Build passiert in-place, nicht in einem Shadow-Build-Verzeichnis** (kein
   `<project-dir-or-file>`-Argument an `build` übergeben). `.o`/`moc_*`-Dateien
   vom letzten Build bleiben im Arbeitsbaum liegen und werden beim nächsten
