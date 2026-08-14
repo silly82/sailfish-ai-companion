@@ -205,31 +205,44 @@ die 0600-Datei. Neue `src/platform/sandboxed/keystore_secrets.cpp` implementiert
 dieselbe `KeyStore`-Klasse (`core/keystore.h`) über `StoreSecretRequest`/
 `StoredSecretRequest`/`DeleteSecretRequest`; `waitForFinished()` hält die
 öffentliche API synchron, obwohl die Requests intern über D-Bus zum
-`sailfishsecretsd` laufen — AIClient/OpenRouterBackend lesen den Key mitten im
-Request-Aufbau, ein asynchroner Umbau hätte sich durch mehrere Schichten
-gezogen für einen Vorgang, der nur beim Start und beim Speichern/Löschen des
-Keys überhaupt passiert. Ein kleiner Prozess-Cache (`QHash`, Datei-lokal)
-erspart wiederholte D-Bus-Requests für denselben Provider.
+`sailfishsecretsd` laufen. `core/keystore.cpp` (die 0600-Datei-Variante)
+bleibt bestehen, ist aber jetzt nur noch im `fullaccess`-Block der `.pro`-Datei
+verdrahtet — Full läuft unsandboxed und wird ausserdem von den Desktop-Tests
+gebaut, die kein `Sailfish.Secrets` zur Verfügung haben. Kein `#ifdef` quer
+durch `keystore.cpp`, sondern zwei Implementierungen derselben Klasse, über
+`CONFIG(harbour)`/`CONFIG(fullaccess)` ausgewählt — Architekturentscheidung 1.
 
-`core/keystore.cpp` (die 0600-Datei-Variante) bleibt bestehen, ist aber jetzt
-nur noch im `fullaccess`-Block der `.pro`-Datei verdrahtet — sie ist dort
-weiterhin die dokumentierte Fallback-Implementierung (Full läuft unsandboxed,
-das Dateisystem ist sowieso frei zugänglich) und wird ausserdem von den
-Desktop-Tests gebaut, die kein `Sailfish.Secrets` zur Verfügung haben. Damit
-kein `#ifdef` quer durch `keystore.cpp`, sondern zwei Implementierungen
-derselben Klasse, über `CONFIG(harbour)`/`CONFIG(fullaccess)` ausgewählt —
-Architekturentscheidung 1.
+0.7.0 hatte zwei Bugs, beide erst beim echten Geräte-Install/-Betrieb
+aufgefallen (Desktop-Tests und Emulator zeigen sie nicht):
 
-`rpm/harbour-nemoai.spec`: `BuildRequires: pkgconfig(sailfishsecrets)` ergänzt;
-dabei auch `Requires: nemo-qml-plugin-contextkit-qt5` entfernt — die Zeile war
-seit dem sysfs-Umbau für Akku/Netz (0.5.1/0.6.0) bereits Leiche, nichts im Code
-importiert das QML-Modul mehr. `rpm/sailfishai.spec` (Full) bleibt unverändert,
-da Full weiter die Datei-Variante nutzt und `sailfishsecrets` nicht braucht.
+1. **`aarch64`-RPMs gegen das falsche SDK-Target gebaut.** Gegen das lokal
+   neueste `SailfishOS-5.1.0.11` statt gegen das dokumentierte
+   `SailfishOS-5.0.0.x`, das zur echten Geräte-OS-Version passt. Ergebnis:
+   `libc.so.6(GLIBC_2.34)` als Abhängigkeit — zu neu fürs Gerät
+   (`GLIBC_2.17`), `pkcon`/`zypper` bricht mit „Fehlgeschlagene
+   Abhängigkeiten" für praktisch jede gelinkte Lib gleichzeitig ab. Fix:
+   `aarch64` konsequent gegen `SailfishOS-5.0.0.62-aarch64` bauen (Details
+   und Stolperstein in „Versionierung & Releases" oben).
+2. **Falsches Secrets-Plugin-Muster für Standalone-Secrets.**
+   `keystore_secrets.cpp` nutzte `SecretManager::DefaultEncryptedStoragePluginName`
+   (sqlcipher) als Storage-Plugin der `Secret::Identifier`, ohne je ein
+   Encryption-Plugin zu setzen. Laut Jollas eigener Doku (lokal im SDK als
+   `sailfish-secrets260616.qch` gebündelt, „Which Plugin Should My
+   Application Use?") ist das nicht das dokumentierte Muster für
+   `StoreSecretRequest::StandaloneDeviceLockSecret` — der offizielle Weg ist
+   `SecretManager::DefaultStoragePluginName` als Storage-Plugin plus
+   separates `setEncryptionPluginName(SecretManager::DefaultEncryptionPluginName)`.
+   `DefaultEncryptedStoragePluginName` ist für `CreateCollectionRequest`
+   gedacht, wo dieselbe Plugin-Id beide Rollen übernimmt. Auf dem Gerät
+   scheiterte der alte Code mit „no such plugin exists"
+   (`org.sailfishos.secrets.plugin.encryptedstorage.sqlcipher`) beim
+   Key-Speichern — der Datenblob wird mit dem Fix trotzdem verschlüsselt,
+   das ist ja der Zweck des Encryption-Plugins.
 
 Noch offen für M3: `harbour-rpmvalidator` gegen den neuen Build laufen lassen
 (`sfdk check`, hier ohne SDK nicht geprüft), Icons, Übersetzungen (de/en) unter
 `translations/` anlegen, Store-Assets.
 
-Version auf 0.7.0 (Minor, neues Feature: Secrets-Backend für Harbour).
+Version auf 0.7.1 (Patch — beides Bugfixes an 0.7.0, kein neues Feature).
 
 Detailkonzept: `docs/konzept-v2.md`

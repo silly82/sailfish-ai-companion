@@ -28,10 +28,20 @@ using namespace Sailfish::Secrets;
 
 namespace {
 
+// Der offizielle Standalone-Secret-Codepfad (docs: "Default Secrets Plugins")
+// nutzt DefaultStoragePluginName + ein separat gesetztes EncryptionPluginName,
+// nicht DefaultEncryptedStoragePluginName -- letzteres ist fuer
+// CreateCollectionRequest gedacht, wo dieselbe Plugin-Id sowohl als Storage-
+// als auch als Encryption-Plugin dient. Mit DefaultEncryptedStoragePluginName
+// hier scheiterte StoreSecretRequest auf echter Hardware mit "no such plugin
+// exists" (org.sailfishos.secrets.plugin.encryptedstorage.sqlcipher), obwohl
+// laut Doku standardmaessig vorhanden -- vermutlich fehlt/laedt das
+// SQLCipher-Plugin auf diesem Geraet nicht. Der Datenblob wird trotzdem
+// verschluesselt: das ist gerade der Zweck des Encryption-Plugins.
 Secret::Identifier identifierFor(const QString &provider)
 {
     return Secret::Identifier(provider, QString(),
-                               SecretManager::DefaultEncryptedStoragePluginName);
+                               SecretManager::DefaultStoragePluginName);
 }
 
 // KeyStore ist ein Singleton -- main.cpp instanziiert genau eines. Ein
@@ -57,6 +67,7 @@ void KeyStore::storeKey(const QString &provider, const QString &key)
     req.setDeviceLockUnlockSemantic(SecretManager::DeviceLockKeepUnlocked);
     req.setAccessControlMode(SecretManager::OwnerOnlyMode);
     req.setUserInteractionMode(SecretManager::SystemInteraction);
+    req.setEncryptionPluginName(SecretManager::DefaultEncryptionPluginName);
     req.setSecret(secret);
     req.startRequest();
     req.waitForFinished();
