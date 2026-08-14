@@ -214,7 +214,11 @@ the target builds, so keep to Qt 5.6 APIs in `src/core/`.
       VNC/RDP setup needed, see CLAUDE.md for how. The one flow still not
       click-tested is an actual message send with tool consent, since that
       needs a real API key against a live cloud model, not available in
-      this environment
+      this environment. A real-device self-test also surfaced three open
+      gaps in the full-access tools — calendar access failing with
+      `query_failed`, `find_contact` still unimplemented, and `run_command`
+      timing out on interactive programs like `top` — tracked with a fix
+      plan in [`docs/m4-follow-up-tools.md`](docs/m4-follow-up-tools.md)
 - [ ] M5 Local inference
 - [ ] M6 Voice
 
@@ -446,7 +450,12 @@ Target-Build nicht, in `src/core/` also bei Qt-5.6-APIs bleiben.
       CLAUDE.md für den Weg dahin. Einzig eine echte Nachricht mit
       Tool-Consent ist noch nicht durchgeklickt, da das einen echten
       API-Key gegen ein laufendes Cloud-Modell braucht, den es in dieser
-      Umgebung nicht gibt
+      Umgebung nicht gibt. Ein Selbsttest auf echter Hardware hat zudem drei
+      offene Lücken in den Full-Access-Tools aufgedeckt — Kalenderzugriff
+      scheitert mit `query_failed`, `find_contact` ist noch nicht
+      implementiert, und `run_command` läuft bei interaktiven Programmen wie
+      `top` in einen Timeout — mit Fix-Plan festgehalten in
+      [`docs/m4-follow-up-tools.md`](docs/m4-follow-up-tools.md)
 - [ ] M5 Lokale Inferenz
 - [ ] M6 Sprachein- und -ausgabe
 
