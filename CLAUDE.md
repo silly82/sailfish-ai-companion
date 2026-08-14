@@ -100,10 +100,15 @@ Weg ueber Distributionspakete steht in der README. Aber: Desktop ist Qt 5.15, da
 Geraet Qt 5.6. Ein gruener Lauf ersetzt `sfdk build` nicht, deshalb in
 `src/core/` bei Qt-5.6-APIs bleiben.
 
-## Emulator fernsteuern (ohne Touch/Maus am Host)
+## Emulator fernsteuern (mit X11-Session am Host)
 
-Für automatisierte UI-Tests im SDK-Emulator (VirtualBox), z. B. durch einen
-Agenten ohne eigenes Display:
+Für automatisierte UI-Tests im SDK-Emulator (VirtualBox), wenn der Agent
+Zugriff auf eine echte X11-Session mit sichtbarer VirtualBoxVM-GUI hat
+(`w`/`loginctl` zeigt eine aktive `seat0`-Session). **Ohne so eine Session**
+(reines SSH, kein Display) gilt stattdessen der `touchinject`-Ansatz weiter
+unten unter „Nächster Schritt" (uinput-Gerät im Gast, kein X11 am Host
+nötig) — beide Ansätze wurden in unterschiedlichen Sessions unabhängig
+voneinander erarbeitet, je nachdem was verfügbar war.
 
 - **Status-Desync**: `sfdk emulator status` kann veraltet "running: yes"
   melden, obwohl die VM laut `VBoxManage showvminfo <vm> --machinereadable
@@ -416,5 +421,88 @@ Release `1`, kein Dirty-Git-Suffix), also war reines Umbenennen zu
 
 Formular bei harbour.jolla.com ausgefüllt und eingereicht — **Status: bei
 der Jolla-Store-QA, wartet auf Freigabe.**
+
+M4-Nacharbeiten aus `docs/m4-follow-up-tools.md` abgeschlossen (0.9.0):
+
+1. **`find_contact` implementiert** (beide Provider) über `QContactManager`
+   mit dem `org.nemomobile.contacts.sqlite`-Backend — vorher in beiden
+   Targets ein reiner `not_implemented`-Stub. `QT += contacts` in der
+   `.pro`-Datei, `pkgconfig(Qt5Contacts)` als `BuildRequires` in beiden
+   Specs.
+2. **Kalender-Fehler wird jetzt geloggt**: `FullProvider::upcomingEvents()`
+   registriert einen `mKCal::ExtendedStorageObserver`, der den echten
+   SQLite-Fehler bei `query_failed` protokolliert, statt ihn stillschweigend
+   zu verschlucken.
+3. **`run_command`-Tool-Beschreibung präzisiert**: das Modell weiss jetzt
+   explizit, dass kein Terminal/PTY bereitsteht und interaktive Programme
+   (`top` ohne `-n`) in den 15s-Timeout laufen — keine Verhaltensänderung
+   am Code, nur an dem, was das Modell über das Tool erfährt.
+
+Beim Live-Test von `find_contact` im Emulator (Vorgehen siehe „Emulator
+fernsteuern" oben) zwei Bugs gefangen, die weder die Desktop-Tests noch ein
+reiner Compile-Check zeigen konnten:
+
+**Bug 1 — Tool-Freischaltungen und Default-Modell überlebten keinen
+Neustart (gefangen und behoben noch innerhalb von 0.9.0, vor dem Release).**
+`ToolRegistry`/`AIClient` benutzten `QSettings()` ohne
+expliziten Pfad. Der Default-Konstruktor schreibt nach
+`~/.config/<Organization>/<Application>.conf` — bei `OrganizationName =
+"ch.silly"`, `ApplicationName = "harbour-nemoai"` also
+`~/.config/ch.silly/harbour-nemoai.conf`. Die von Sailjail für den
+Harbour-Build automatisch generierte Firejail-Sandbox whitelisted aber nur
+das GLEICHNAMIGE VERZEICHNIS (`~/.config/ch.silly/harbour-nemoai/`,
+per `--mkdir`/`--whitelist` in der generierten `firejail`-Kommandozeile),
+nicht die Elternebene `~/.config/ch.silly/`, in der die `.conf`-Datei als
+Geschwisterdatei landen müsste. Der Schreibversuch verpuffte lautlos — kein
+Fehler-Signal, `QSettings` meldet Schreibfehler nicht als Exception. Fix:
+neue `src/core/appsettings.h` mit `appSettingsPath()`, das über
+`QStandardPaths::AppConfigLocation` explizit in das whitelisted Verzeichnis
+schreibt (`.../harbour-nemoai/settings.ini` statt `.../harbour-nemoai.conf`).
+`QSettings` selbst bleibt an der Aufrufstelle (`QSettings(appSettingsPath(),
+QSettings::IniFormat)`), weil `QSettings` nicht kopierbar ist und ein
+Wrapper, der ein fertiges `QSettings`-Objekt zurückgibt, deshalb nicht
+kompiliert (auch nicht mit garantierter Kopie-Elision vor C++17). Tests
+(`tst_toolregistry.cpp`, `tst_toolroundtrip.cpp`, `tests/main.cpp`) auf
+denselben Pfad umgestellt, Isolation von der alten `QSettings::setPath()`-
+Krücke auf `QStandardPaths::setTestModeEnabled(true)` — sonst hätten die
+Tests unbemerkt gegen den echten `appSettingsPath()` des Entwicklerkontos
+geschrieben. Verifiziert im Emulator: Tool aktiviert, App hart gekillt und
+neu gestartet, Toggle stand noch, `settings.ini` lag exakt am erwarteten
+Pfad.
+
+**Bug 2 — `find_contact` fand trotz aktiviertem Tool und korrekt
+angezeigtem Consent-Sheet keine Kontakte (Fix in 0.9.1).** Ursache lag
+tiefer als vermutet: nicht nur der `QContactDetailFilter` auf
+`QContactDisplayLabel` liefert bei diesem Backend serverseitig keine
+Treffer (DisplayLabel ist berechnet, keine indizierte Spalte) — die
+komplett ungefilterte, synchrone Convenience-Methode
+`QContactManager::contacts()` liefert bei `org.nemomobile.contacts.sqlite`
+grundsätzlich leer mit `UnspecifiedError` zurück, selbst wenn Kontakte
+existieren. Gefunden per Diagnose-Binary: ein Wegwerf-`QCoreApplication`
+mit `QT += contacts`, cross-kompiliert über
+`sfdk engine exec -- sb2 -t <target> qmake/make` (kein `make` im
+Emulator-Image selbst, aber `sb2 -t <target> make` im Build-Engine-Host
+funktioniert), per `scp` auf den Emulator kopiert. Das Binary legte per
+`QContactSaveRequest` (asynchrone API) probeweise einen Testkontakt an —
+`manager.saveContact()` (die synchrone Variante) scheiterte dabei
+ebenfalls mit `UnspecifiedError`, was den Verdacht auf die synchronen
+Convenience-Methoden generell lenkte. `QContactFetchRequest` (asynchron,
+über `waitForFinished()` blockierend genutzt) las dieselbe Datenbank
+anschliessend korrekt. Fix: `findContact` in beiden Providern nutzt jetzt
+`QContactFetchRequest` statt `manager.contacts()`, client-seitiger
+Case-insensitive-Filter auf dem gelesenen `QContactDisplayLabel` (kein
+serverseitiger Filter mehr). Verifiziert end-to-end im Emulator gegen den
+per Diagnose-Binary angelegten Testkontakt, durch den kompletten
+Chat/Consent/Tool-Call-Pfad.
+
+Build-Engine ist während der `0.9.1`-Release-Builds zweimal mit „Remote
+process crashed" abgestürzt (bei `aarch64`- und `armv7hl`-Full-Access-
+Builds) — `sfdk engine start` neu hochgefahren, betroffenen Build wiederholt,
+danach fehlerfrei durchgelaufen. Ressourcen (RAM/Disk) waren beim Neustart
+unauffällig, kein reproduzierter Zusammenhang mit dem Code gefunden.
+
+Version 0.9.0 (Minor — `find_contact` von Stub zu echtem Feature), danach
+0.9.1 (Patch — Fix für Bug 2, der `find_contact` in 0.9.0 unbenutzbar
+machte).
 
 Detailkonzept: `docs/konzept-v2.md`
