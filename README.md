@@ -55,6 +55,34 @@ that shows the currently selected model and opens the model picker — the
 choice already persisted across restarts, it just had no way to be reached
 before starting a chat.
 
+### API key storage (Sailfish.Secrets)
+
+The Harbour build now stores the API key via `Sailfish.Secrets` 1.0 instead
+of the earlier 0600-permission file. The full-access build keeps the
+file-based fallback unchanged (it's unsandboxed anyway, and it's what the
+desktop test suite links against, since there's no `Sailfish.Secrets` there).
+
+Two bugs surfaced only once this shipped to real hardware — neither the
+desktop tests nor the SDK emulator caught them:
+
+- **Wrong SDK build target for `aarch64`.** RPMs built against the SDK's
+  newest target (`SailfishOS-5.1.0.11`) require a glibc newer than what's on
+  the actual device (`SailfishOS-5.0.0.x`), so installation failed outright
+  with a full page of "failed dependencies". Fixed by building `aarch64`
+  against `SailfishOS-5.0.0.62-aarch64` specifically — see the version note
+  in the build command below.
+- **Wrong Secrets plugin for a standalone secret.** The code used
+  `SecretManager::DefaultEncryptedStoragePluginName` (SQLCipher) as the
+  storage plugin without ever setting an encryption plugin — that
+  combination is meant for `CreateCollectionRequest`, not a standalone
+  `StoreSecretRequest`, and failed on-device with "no such plugin exists".
+  Fixed to follow Jolla's documented pattern instead:
+  `DefaultStoragePluginName` plus a separately set
+  `DefaultEncryptionPluginName`.
+
+Both fixes shipped in v0.7.1 and are confirmed on real Jolla hardware: key
+storage and a full chat round-trip both work end to end.
+
 ### Full-access tools
 
 Beyond Harbour's tool set, the full-access build (`sailfishai`) adds three
@@ -89,6 +117,16 @@ sfdk build                                    # Harbour (default)
 sfdk build -- --define "fullaccess 1"         # full access
 sfdk check                                    # Harbour validator
 ```
+
+Use `SailfishOS-5.0.0.x`, not the SDK's newest installed target — a newer
+target links against a newer glibc than what ships on-device and the
+resulting package fails to install (see
+[API key storage](#api-key-storage-sailfishsecrets) above). Building for
+`i486`/`armv7hl` needs the matching `SailfishOS-5.0.0.x-i486`/`-armv7hl`
+target installed; if only a newer target is available for those
+architectures, treat those two builds as unverified until a matching
+`5.0.0.x` target exists (there's no `i486`/`armv7hl` Jolla hardware to test
+against here either way).
 
 Run `sfdk check` before every store upload.
 
@@ -138,12 +176,16 @@ the target builds, so keep to Qt 5.6 APIs in `src/core/`.
 - [x] M1 Vertical slice (chat, streaming, history) — **confirmed on real
       Jolla hardware**: a test API key plus a device-storage query
       round-tripped through a tool call against a real cloud model
-      (OpenRouter) without errors
+      (OpenRouter) without errors; re-confirmed after the M3 Secrets
+      migration below, key storage and a full chat round-trip both work
 - [x] M2 Tool framework (registry, consent gate, function-calling roundtrip) —
       covered by desktop tests against a fake backend, and now also verified
       against a real model on-device (see M1)
-- [ ] M3 Harbour release — pending: move the API key from a 0600 file to
-      `Sailfish.Secrets`
+- [x] M3 Harbour release — API key now stored via `Sailfish.Secrets` (see
+      [API key storage](#api-key-storage-sailfishsecrets) above), confirmed
+      on real hardware after fixing two on-device-only bugs. Still open:
+      `harbour-rpmvalidator` run, icons, translations (`de`/`en`) under
+      `translations/`, Store assets
 - [x] M4 Full target / OpenRepos — calendar/SMS/`run_command` tools
       implemented (see [Full-access tools](#full-access-tools) above);
       installs and launches cleanly, verified on the SDK emulator, but the
@@ -214,6 +256,35 @@ Modell zeigt und die Modellauswahl öffnet — die Wahl war schon vorher über
 Neustarts hinweg persistent, war aber ohne einen offenen Chat nicht
 erreichbar.
 
+### API-Key-Ablage (Sailfish.Secrets)
+
+Der Harbour-Build speichert den API-Key jetzt über `Sailfish.Secrets` 1.0
+statt über die frühere Datei mit 0600-Rechten. Der Vollzugriffs-Build behält
+die dateibasierte Variante unverändert bei (läuft ohnehin unsandboxed, und
+die Desktop-Testsuite linkt dagegen, da es dort kein `Sailfish.Secrets`
+gibt).
+
+Zwei Bugs sind erst beim echten Geräte-Rollout aufgefallen — weder die
+Desktop-Tests noch der SDK-Emulator haben sie gezeigt:
+
+- **Falsches SDK-Build-Target für `aarch64`.** Gegen das neueste SDK-Target
+  (`SailfishOS-5.1.0.11`) gebaute RPMs verlangen ein neueres glibc, als auf
+  dem echten Gerät (`SailfishOS-5.0.0.x`) läuft — die Installation scheiterte
+  komplett mit einer ganzen Seite „Fehlgeschlagene Abhängigkeiten". Fix:
+  `aarch64` gezielt gegen `SailfishOS-5.0.0.62-aarch64` bauen — siehe der
+  Versionshinweis beim Build-Befehl unten.
+- **Falsches Secrets-Plugin für ein Standalone-Secret.** Der Code nutzte
+  `SecretManager::DefaultEncryptedStoragePluginName` (SQLCipher) als
+  Storage-Plugin, ohne je ein Encryption-Plugin zu setzen — diese
+  Kombination ist für `CreateCollectionRequest` gedacht, nicht für ein
+  Standalone-`StoreSecretRequest`, und scheiterte auf dem Gerät mit „no such
+  plugin exists". Fix: stattdessen Jollas dokumentiertes Muster —
+  `DefaultStoragePluginName` plus separat gesetztes
+  `DefaultEncryptionPluginName`.
+
+Beide Fixes sind in v0.7.1 enthalten und auf echter Jolla-Hardware bestätigt:
+Key-Speicherung und ein voller Chat-Roundtrip funktionieren durchgängig.
+
 ### Tools im Vollzugriffs-Build
 
 Zusätzlich zum Harbour-Tool-Set bringt der Vollzugriffs-Build (`sailfishai`)
@@ -251,6 +322,15 @@ sfdk build                                    # Harbour (Standard)
 sfdk build -- --define "fullaccess 1"         # Vollzugriff
 sfdk check                                    # Harbour-Validator
 ```
+
+`SailfishOS-5.0.0.x` verwenden, nicht das neueste installierte SDK-Target —
+ein neueres Target linkt gegen ein neueres glibc, als auf dem Gerät läuft,
+und das fertige Paket lässt sich dann nicht installieren (siehe
+[API-Key-Ablage](#api-key-ablage-sailfishsecrets) oben). Für `i486`/`armv7hl`
+wird das passende `SailfishOS-5.0.0.x-i486`/`-armv7hl`-Target gebraucht;
+ist dafür nur ein neueres Target verfügbar, gelten diese beiden Builds als
+ungeprüft, bis ein passendes `5.0.0.x`-Target existiert (für diese
+Architekturen gibt es hier ohnehin keine Jolla-Hardware zum Testen).
 
 `sfdk check` vor jedem Store-Upload ausführen.
 
@@ -301,12 +381,16 @@ Target-Build nicht, in `src/core/` also bei Qt-5.6-APIs bleiben.
 - [x] M1 Vertikaler Durchstich (Chat, Streaming, Verlauf) — **auf echter
       Jolla-Hardware bestätigt**: Test-API-Key eingegeben, Speicherabfrage
       per Tool-Call gegen ein echtes Cloud-Modell (OpenRouter) fehlerfrei
-      durchgelaufen
+      durchgelaufen; nach der M3-Secrets-Umstellung unten erneut bestätigt —
+      Key-Speicherung und ein voller Chat-Roundtrip funktionieren beide
 - [x] M2 Tool-Framework (Registry, Datenschleuse, Function-Calling-Roundtrip) —
       durch Desktop-Tests gegen ein Fake-Backend abgedeckt, und jetzt auch
       gegen ein echtes Modell auf dem Gerät verifiziert (siehe M1)
-- [ ] M3 Harbour-Release — offen: den API-Key von einer 0600-Datei auf
-      `Sailfish.Secrets` umstellen
+- [x] M3 Harbour-Release — API-Key wird jetzt über `Sailfish.Secrets`
+      gespeichert (siehe [API-Key-Ablage](#api-key-ablage-sailfishsecrets)
+      oben), auf echter Hardware bestätigt nach dem Fix zweier Bugs, die nur
+      auf dem Gerät auffielen. Noch offen: `harbour-rpmvalidator`-Lauf,
+      Icons, Übersetzungen (`de`/`en`) unter `translations/`, Store-Assets
 - [x] M4 Full-Target / OpenRepos — Kalender-/SMS-/`run_command`-Tools
       implementiert (siehe [Tools im Vollzugriffs-Build](#tools-im-vollzugriffs-build)
       oben); installiert und startet sauber, auf dem SDK-Emulator verifiziert,
