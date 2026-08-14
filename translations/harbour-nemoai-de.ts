@@ -330,7 +330,7 @@
         <translation>%1 aktiv</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="68"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="69"/>
         <source>From “Personal” onward, every access asks for confirmation first, and the result is anonymised before it&apos;s sent.</source>
         <translation>Ab „Persönlich“ wird vor jedem Zugriff nachgefragt und das Ergebnis vor dem Versand anonymisiert.</translation>
     </message>
