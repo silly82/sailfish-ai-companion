@@ -195,10 +195,17 @@ the target builds, so keep to Qt 5.6 APIs in `src/core/`.
       `translations/harbour-nemoai-de.ts` (UI source strings are English
       as of 0.8.0). Icons are no longer placeholders either — Harbour keeps
       the robot glyph, `sailfishai` adds a red skull badge so the two
-      variants are distinguishable at a glance. Store listing text and
-      screenshots are in `store/` — screenshots are emulator captures at
-      336×798 (lower than real device resolution); replace with real
-      hardware shots before actually submitting. M3 is otherwise complete
+      variants are distinguishable at a glance. Store submission material
+      lives in `store/`: listing text (English and German), a bilingual
+      privacy policy ([`docs/privacy.md`](docs/privacy.md)), a cover image,
+      and screenshots. Screenshots are real Jolla Phone 2026 captures —
+      device locale was German at capture time, so the listing carries both
+      English and German Details to match — upscaled from the device's
+      native 1032×2272 to 1080×2378 to clear the Store form's stated
+      1080×1920 minimum, replacing the earlier 336×798 emulator
+      placeholders. RPMs (`harbour-nemoai-0.8.0-1.{aarch64,armv7hl,i486}.rpm`)
+      built and **submitted to Jolla Store QA on 2026-08-14 — awaiting
+      approval.** M3 is otherwise complete
 - [x] M4 Full target / OpenRepos — calendar/SMS/`run_command` tools
       implemented (see [Full-access tools](#full-access-tools) above);
       installs and launches cleanly, verified on the SDK emulator including
@@ -418,10 +425,18 @@ Target-Build nicht, in `src/core/` also bei Qt-5.6-APIs bleiben.
       Quelltexte sind seit 0.8.0 Englisch). Auch die Icons sind keine
       Platzhalter mehr — Harbour behält den Robo-Kopf, `sailfishai` bekommt
       ein rotes Totenkopf-Badge zur Unterscheidung auf einen Blick.
-      Store-Listing-Text und Screenshots liegen unter `store/` —
-      Screenshots sind Emulator-Aufnahmen bei 336×798 (niedriger als echte
-      Geräteauflösung), vor der eigentlichen Einreichung durch Aufnahmen von
-      echter Hardware ersetzen. Damit ist M3 sonst abgeschlossen
+      Einreichungsmaterial liegt unter `store/`: Listing-Text (Englisch und
+      Deutsch), eine zweisprachige Datenschutzerklärung
+      ([`docs/privacy.md`](docs/privacy.md)), ein Cover-Bild und
+      Screenshots. Die Screenshots sind echte Aufnahmen vom Jolla Phone
+      2026 — Geräte-Systemsprache war zum Aufnahmezeitpunkt Deutsch,
+      deshalb trägt das Listing passend dazu sowohl englische als auch
+      deutsche Details — von der geräteeigenen Auflösung 1032×2272 auf
+      1080×2378 hochskaliert, um das im Formular geforderte Minimum von
+      1080×1920 zu erfüllen; ersetzen die vorherigen Emulator-Platzhalter
+      bei 336×798. RPMs (`harbour-nemoai-0.8.0-1.{aarch64,armv7hl,i486}.rpm`)
+      gebaut und am 14.08.2026 **bei der Jolla-Store-QA eingereicht — wartet
+      auf Freigabe.** Damit ist M3 sonst abgeschlossen
 - [x] M4 Full-Target / OpenRepos — Kalender-/SMS-/`run_command`-Tools
       implementiert (siehe [Tools im Vollzugriffs-Build](#tools-im-vollzugriffs-build)
       oben); installiert und startet sauber, auf dem SDK-Emulator verifiziert

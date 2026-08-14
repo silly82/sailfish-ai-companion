@@ -334,4 +334,36 @@ nicht.
 Version auf 0.8.0 (Minor — neues Feature: Deutsch als vollständige
 Übersetzung, App-UI-Quellsprache jetzt Englisch).
 
+Store-Einreichung für 0.8.0 abgeschlossen. Die Emulator-Screenshots waren
+mit 336×798 sowohl unter dem im Formular geforderten Minimum (1080×1920)
+als auch inhaltlich veraltet (zeigten noch deutsche Tool-Beschreibungen von
+vor der 0.8.0-Quellsprachumstellung). Ersetzt durch echte Aufnahmen vom
+Jolla Phone 2026 (`Pictures/Screenshots/` auf dem Gerät, per SSH/`pscp`
+abgeholt) — der Lipstick-D-Bus-Screenshot-Dienst
+(`org.nemomobile.lipstick.saveScreenshot`) lässt sich aus einer SSH-Session
+nicht aufrufen („Access denied", vermutlich SELinux-Kontext), stattdessen
+manuell über die „Bildschirmfoto"-Kachel in den Quick Settings ausgelöst.
+Geräte-Systemsprache war Deutsch, deshalb trägt das Store-Listing jetzt
+sowohl englische als auch deutsche Details, passend zu den Screenshots.
+Native Auflösung 1032×2272 lag unter der 1080px-Breite aus dem Formular —
+mit Pillow verlustfrei (Lanczos, Seitenverhältnis erhalten) auf 1080×2378
+hochskaliert. Neu dazugekommen: `docs/privacy.md` (zweisprachige
+Datenschutzerklärung, vorher existierte keine) und `store/cover.png`
+(1080×540, aus der Icon-Palette gebaut statt aus der zufälligen
+Sailfish-Ambiance-Farbe der Screenshots, da Ambiance pro Nutzer
+unterschiedlich ist und nicht zur eigentlichen App-Marke gehört).
+
+Beim Umbenennen der finalen RPMs (`harbour-nemoai-0.8.0.{aarch64,armv7hl,
+486}.rpm` aus dem Download-Ordner) auf das von Harbour verlangte Schema
+`harbour-NAME-VERSION-RELEASE.ARCH.rpm` nicht blind umbenannt, sondern
+zuerst die drei Dateien per `pscp` aufs Gerät kopiert und dort mit
+`rpm -qp --queryformat` die echten NEVRA-Metadaten gelesen — genau der
+Stolperstein von weiter oben („der Harbour-Validator liest die echte
+RPM-Metadata, nicht den Dateinamen"). Metadaten waren sauber (`0.8.0`,
+Release `1`, kein Dirty-Git-Suffix), also war reines Umbenennen zu
+`harbour-nemoai-0.8.0-1.{aarch64,armv7hl,i486}.rpm` ausreichend.
+
+Formular bei harbour.jolla.com ausgefüllt und eingereicht — **Status: bei
+der Jolla-Store-QA, wartet auf Freigabe.**
+
 Detailkonzept: `docs/konzept-v2.md`
