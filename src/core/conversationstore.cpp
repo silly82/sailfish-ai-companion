@@ -28,7 +28,7 @@ bool ConversationStore::open()
 {
     const QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (dir.isEmpty() || !QDir().mkpath(dir)) {
-        emit errorOccurred(tr("Datenordner nicht beschreibbar"));
+        emit errorOccurred(tr("Data folder not writable"));
         return false;
     }
     return openAt(dir + QStringLiteral("/history.db"), QStringLiteral("sfai_history"));
@@ -127,7 +127,7 @@ int ConversationStore::createConversation(const QString &title)
     QSqlQuery q(m_db);
     q.prepare(QStringLiteral(
         "INSERT INTO conversations (title, created_at) VALUES (?, ?)"));
-    q.addBindValue(title.isEmpty() ? tr("Neue Konversation") : title);
+    q.addBindValue(title.isEmpty() ? tr("New conversation") : title);
     q.addBindValue(nowIso());
     if (!q.exec()) {
         emit errorOccurred(q.lastError().text());

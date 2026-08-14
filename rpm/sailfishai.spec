@@ -1,6 +1,6 @@
 Name:       sailfishai
 Summary:    AI Companion for Sailfish OS (full access)
-Version:    0.7.1
+Version:    0.8.0
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailfish-ai-companion

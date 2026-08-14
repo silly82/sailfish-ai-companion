@@ -31,7 +31,7 @@ void KeyStore::storeKey(const QString &provider, const QString &key)
 {
     const QString path = keyPath(provider);
     if (path.isEmpty()) {
-        emit errorOccurred(tr("Datenordner nicht beschreibbar"));
+        emit errorOccurred(tr("Data folder not writable"));
         return;
     }
 

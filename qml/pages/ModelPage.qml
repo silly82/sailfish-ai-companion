@@ -13,7 +13,7 @@ Page {
         anchors.fill: parent
         model: AI.models
 
-        header: PageHeader { title: qsTr("Modell") }
+        header: PageHeader { title: qsTr("Model") }
 
         delegate: ListItem {
             id: item
@@ -41,8 +41,8 @@ Page {
                     font.pixelSize: Theme.fontSizeExtraSmall
                     color: Theme.secondaryColor
                     text: modelData.free
-                          ? qsTr("%1k Kontext · gratis").arg(Math.round(modelData.context/1000))
-                          : qsTr("%1k Kontext · %2 $/Mtok")
+                          ? qsTr("%1k context · free").arg(Math.round(modelData.context/1000))
+                          : qsTr("%1k context · %2 $/Mtok")
                                 .arg(Math.round(modelData.context/1000))
                                 .arg((modelData.prompt * 1000000).toFixed(2))
                 }
@@ -51,9 +51,9 @@ Page {
 
         ViewPlaceholder {
             enabled: view.count === 0
-            text: qsTr("Keine Modelle geladen")
-            hintText: KeyStore.hasKey ? qsTr("Liste wird abgerufen")
-                                      : qsTr("Zuerst einen API-Key hinterlegen")
+            text: qsTr("No models loaded")
+            hintText: KeyStore.hasKey ? qsTr("Fetching list")
+                                      : qsTr("Set an API key first")
         }
 
         VerticalScrollDecorator {}

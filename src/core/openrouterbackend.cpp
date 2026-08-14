@@ -31,11 +31,11 @@ bool OpenRouterBackend::available() const { return m_keys && m_keys->hasKey(); }
 void OpenRouterBackend::chat(const QJsonArray &messages, const QJsonArray &tools)
 {
     if (!available()) {
-        emit failed(tr("Kein API-Key hinterlegt"));
+        emit failed(tr("No API key set"));
         return;
     }
     if (m_model.isEmpty()) {
-        emit failed(tr("Kein Modell gewählt"));
+        emit failed(tr("No model selected"));
         return;
     }
     cancel();
@@ -81,7 +81,7 @@ void OpenRouterBackend::handleEvent(const QByteArray &payload)
     if (root.contains(QStringLiteral("error"))) {
         const QString message = root.value(QStringLiteral("error")).toObject()
                                     .value(QStringLiteral("message")).toString();
-        emit failed(message.isEmpty() ? tr("Unbekannter Fehler") : message);
+        emit failed(message.isEmpty() ? tr("Unknown error") : message);
         return;
     }
 
@@ -149,7 +149,7 @@ void OpenRouterBackend::finishStream()
     if (!m_sawDone) {
         // Sauber geschlossen, aber ohne [DONE] — die Antwort ist angeschnitten.
         // Auf Mobilfunk passiert das regelmässig.
-        emit failed(tr("Verbindung vorzeitig beendet"));
+        emit failed(tr("Connection closed early"));
         return;
     }
     emit finished();

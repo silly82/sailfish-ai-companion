@@ -19,9 +19,9 @@ Dialog {
         spacing: Theme.paddingMedium
 
         DialogHeader {
-            acceptText: qsTr("Freigeben")
-            cancelText: qsTr("Ablehnen")
-            title: qsTr("Zugriff bestätigen")
+            acceptText: qsTr("Allow")
+            cancelText: qsTr("Deny")
+            title: qsTr("Confirm access")
         }
 
         Label {
@@ -46,9 +46,8 @@ Dialog {
             wrapMode: Text.WordWrap
             font.pixelSize: Theme.fontSizeExtraSmall
             color: Theme.secondaryColor
-            text: qsTr("Personenbezogene Felder werden vor dem Versand durch "
-                       + "Platzhalter ersetzt und erst in der Antwort wieder "
-                       + "aufgelöst.")
+            text: qsTr("Personal fields are replaced with placeholders before "
+                       + "sending, and only resolved back in the reply.")
         }
     }
 }

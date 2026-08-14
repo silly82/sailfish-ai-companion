@@ -12,16 +12,16 @@ Page {
             id: col
             width: parent.width
 
-            PageHeader { title: qsTr("Einstellungen") }
+            PageHeader { title: qsTr("Settings") }
 
             SectionHeader { text: qsTr("Backend") }
 
             TextField {
                 id: keyField
                 width: parent.width
-                label: qsTr("OpenRouter API-Key")
+                label: qsTr("OpenRouter API key")
                 echoMode: TextInput.Password
-                placeholderText: KeyStore.hasKey ? qsTr("gespeichert") : qsTr("nicht gesetzt")
+                placeholderText: KeyStore.hasKey ? qsTr("saved") : qsTr("not set")
                 // Ablage über Sailfish.Secrets — nie in QSettings, nie ins Log
                 EnterKey.onClicked: { KeyStore.storeKey("openrouter", text); text = "" }
             }
@@ -55,22 +55,22 @@ Page {
             Connections {
                 target: KeyStore
                 onErrorOccurred: keyStatus.show(message, true)
-                onKeyChanged: if (KeyStore.hasKey) keyStatus.show(qsTr("Key gespeichert"), false)
+                onKeyChanged: if (KeyStore.hasKey) keyStatus.show(qsTr("Key saved"), false)
             }
 
-            SectionHeader { text: qsTr("Modell") }
+            SectionHeader { text: qsTr("Model") }
 
             ValueButton {
                 width: parent.width
-                label: qsTr("Standardmodell")
-                value: AI.model.length ? AI.model : qsTr("Keines ausgewählt")
+                label: qsTr("Default model")
+                value: AI.model.length ? AI.model : qsTr("None selected")
                 onClicked: pageStack.push(Qt.resolvedUrl("ModelPage.qml"))
             }
 
             TextSwitch {
-                text: qsTr("Nur lokal")
-                description: qsTr("Lokales Modell verwenden. Nichts verlässt das Gerät, "
-                                + "alle Tools sind ohne Rückfrage freigeschaltet.")
+                text: qsTr("Local only")
+                description: qsTr("Use a local model. Nothing leaves the device, "
+                                + "all tools are enabled without confirmation.")
                 enabled: Caps.localInference
                 checked: Consent.localOnly
                 onCheckedChanged: Consent.localOnly = checked
@@ -83,8 +83,8 @@ Page {
                 wrapMode: Text.WordWrap
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
-                text: qsTr("Lokale Inference benötigt das Paket sailfishai-llama "
-                         + "und ist in der Store-Version nicht verfügbar.")
+                text: qsTr("Local inference needs the sailfishai-llama package "
+                         + "and isn't available in the Store version.")
             }
         }
     }

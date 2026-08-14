@@ -7,9 +7,20 @@ Sailfish OS AI Companion. Native Qt/QML-App, zwei Build-Targets aus einem Trunk.
 Code, Kommentare, Commit-Messages und Bezeichner auf Englisch. Nutzerseitige
 Dokumentation zweisprachig: Englisch zuerst, danach Schweizer Hochdeutsch
 (Standardsprache, kein Dialekt, durchgehend «ss» statt «ß»).
-Übersetzungen sollen unter `translations/` (de/en) liegen — das Verzeichnis
-existiert noch nicht, die Strings sind aber durchgehend in `qsTr()` gefasst.
-Anlegen gehört zu M3.
+
+App-UI (`qsTr()`/`tr()`-Strings in `qml/` und `src/core/`) ist seit 0.8.0
+auf Englisch als Quellsprache umgestellt — vorher war der Quelltext direkt
+Deutsch, was `translations/harbour-nemoai-de.ts` als Ziel witzlos gemacht
+hätte (Deutsch→Deutsch). Deutsch ist jetzt die einzige gepflegte Übersetzung,
+unter `translations/harbour-nemoai-de.ts`, per `TRANSLATIONS +=` in der
+`.pro`-Datei eingebunden; `translations/harbour-nemoai.ts` (keine
+Locale-Endung) ist das von `lupdate` mitgezogene Quelltext-Template, wird
+nicht per `lrelease` gebaut und ist kein install-Ziel. Neuer String im Code
+→ `lupdate -noobsolete src qml -ts translations/harbour-nemoai.ts
+translations/harbour-nemoai-de.ts` laufen lassen, die neue
+`<translation type="unfinished"></translation>` in der `-de.ts` befüllen.
+`%n`-Pluralformen brauchen `language="de"` im `<TS>`-Root, sonst legt
+`lupdate` nur eine `<numerusform>` statt der für Deutsch nötigen zwei an.
 
 ## Nicht verhandelbare Architekturentscheidungen
 
@@ -263,9 +274,30 @@ validator-tauglichen Build stattdessen aus einem `git worktree add
 <pfad-unter-dem-sdk-workspace> vX.Y.Z`-Checkout gebaut (Details im
 Stolperstein oben unter „Versionierung & Releases").
 
-Noch offen für M3: Icons (aktuell Platzhalter, s. u.), Übersetzungen (de/en)
-unter `translations/` anlegen, Store-Assets/Screenshots.
+Übersetzungen angelegt (letzter offener Punkt aus M3 neben Icons/Store-
+Assets): `qsTr()`/`tr()`-Quelltexte in allen 8 QML-Seiten/-Komponenten und
+5 `src/core/`-Dateien von Deutsch auf Englisch umgestellt (58 Strings,
+per `grep -rn "qsTr(\|tr(\""` gefunden), die ursprünglichen deutschen Texte
+1:1 als fertige Übersetzung in `translations/harbour-nemoai-de.ts`
+übernommen — keine Neuübersetzung nötig, nur Quelle und Ziel getauscht.
+`%n Nachricht(en)` (Plural in `MainPage.qml`) brauchte zwei echte
+`<numerusform>`-Einträge (Singular/Plural), die kamen erst, nachdem
+`language="de"` im `<TS>`-Root gesetzt war — ohne das legt `lupdate` nur
+eine Form an und `lrelease` kompiliert trotzdem, nur eben falsch für
+Deutsch. `qttools5-dev-tools` war in dieser Umgebung nicht installiert
+(`lupdate`/`lrelease` fehlten binär, nur der `qtchooser`-Stub war da) —
+nachinstalliert, um die echten Tools zu bekommen. Verifiziert über einen
+echten `sfdk build`-Lauf: die vorher bei jedem Build ignorierte Fehlermeldung
+„Cannot open .../translations/harbour-nemoai-de.ts" ist weg, `.qm` landet
+jetzt im RPM statt am `install_qm`-Schritt zu scheitern.
 
-Version auf 0.7.1 (Patch — beides Bugfixes an 0.7.0, kein neues Feature).
+Icons sind jetzt auch keine Platzhalter mehr (Commit `fcbf3c1`): Harbour
+behält den Robo-Kopf, `sailfishai` bekommt zusätzlich ein rotes
+Totenkopf-Badge, damit die beiden Varianten auf einen Blick unterscheidbar
+sind und das Risiko der unsandboxed Full-Variante visuell offensichtlich
+ist. Noch offen für M3: Store-Assets/Screenshots.
+
+Version auf 0.8.0 (Minor — neues Feature: Deutsch als vollständige
+Übersetzung, App-UI-Quellsprache jetzt Englisch).
 
 Detailkonzept: `docs/konzept-v2.md`

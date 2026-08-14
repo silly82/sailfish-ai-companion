@@ -22,7 +22,7 @@ ListItem {
             width: parent.width
             font.pixelSize: Theme.fontSizeExtraSmall
             color: Theme.secondaryHighlightColor
-            text: qsTr("Werkzeug: %1").arg(model.toolName)
+            text: qsTr("Tool: %1").arg(model.toolName)
         }
 
         Label {

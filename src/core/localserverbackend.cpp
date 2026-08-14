@@ -26,6 +26,6 @@ void LocalServerBackend::stopServer()
 }
 
 void LocalServerBackend::chat(const QJsonArray &m, const QJsonArray &t)
-{ Q_UNUSED(m) Q_UNUSED(t) emit failed(tr("Nicht implementiert (M5)")); }
+{ Q_UNUSED(m) Q_UNUSED(t) emit failed(tr("Not implemented (M5)")); }
 
 void LocalServerBackend::cancel() {}

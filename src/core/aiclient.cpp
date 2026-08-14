@@ -95,7 +95,7 @@ void AIClient::sendMessage(const QString &text, int conversationId)
 {
     if (text.isEmpty() || m_streaming) return;
     if (conversationId < 0) {
-        emit errorOccurred(tr("Keine Konversation geöffnet"));
+        emit errorOccurred(tr("No conversation open"));
         return;
     }
 
@@ -179,7 +179,7 @@ void AIClient::runPendingCalls()
 
     if (++m_toolRounds > kMaxToolRounds) {
         setStreaming(false);
-        emit errorOccurred(tr("Abgebrochen — das Modell ruft ununterbrochen Tools auf"));
+        emit errorOccurred(tr("Cancelled — the model kept calling tools without stopping"));
         return;
     }
     startRequest();

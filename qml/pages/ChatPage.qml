@@ -39,21 +39,21 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: qsTr("Modell wählen")
+                text: qsTr("Choose model")
                 onClicked: pageStack.push(Qt.resolvedUrl("ModelPage.qml"))
             }
             MenuItem {
-                text: qsTr("Antwort abbrechen")
+                text: qsTr("Cancel response")
                 visible: AI.streaming
                 onClicked: AI.cancel()
             }
         }
 
         header: PageHeader {
-            title: AI.model.length ? AI.model : qsTr("Kein Modell")
+            title: AI.model.length ? AI.model : qsTr("No model")
             description: Consent.localOnly
-                ? qsTr("Lokal — nichts verlässt das Gerät")
-                : qsTr("%1 Tools aktiv").arg(Tools.activeToolCount)
+                ? qsTr("Local — nothing leaves the device")
+                : qsTr("%1 tools active").arg(Tools.activeToolCount)
         }
 
         VerticalScrollDecorator {}
@@ -81,8 +81,8 @@ Page {
     TextArea {
         id: input
         anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-        placeholderText: AI.model.length ? qsTr("Nachricht")
-                                         : qsTr("Zuerst ein Modell wählen")
+        placeholderText: AI.model.length ? qsTr("Message")
+                                         : qsTr("Choose a model first")
         enabled: !AI.streaming && AI.model.length > 0
         EnterKey.enabled: text.trim().length > 0
         EnterKey.iconSource: "image://theme/icon-m-enter-accept"

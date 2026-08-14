@@ -191,8 +191,11 @@ the target builds, so keep to Qt 5.6 APIs in `src/core/`.
       on real hardware after fixing two on-device-only bugs.
       `harbour-rpmvalidator` (`sfdk check`) passes clean against a build
       from the exact release tag (a dirty git-suffix version fails it — see
-      the build note above). Still open: icons (currently placeholders),
-      translations (`de`/`en`) under `translations/`, Store assets
+      the build note above). German translation shipped under
+      `translations/harbour-nemoai-de.ts` (UI source strings are English
+      as of 0.8.0). Icons are no longer placeholders either — Harbour keeps
+      the robot glyph, `sailfishai` adds a red skull badge so the two
+      variants are distinguishable at a glance. Still open: Store assets
 - [x] M4 Full target / OpenRepos — calendar/SMS/`run_command` tools
       implemented (see [Full-access tools](#full-access-tools) above);
       installs and launches cleanly, verified on the SDK emulator, but the
@@ -404,9 +407,12 @@ Target-Build nicht, in `src/core/` also bei Qt-5.6-APIs bleiben.
       oben), auf echter Hardware bestätigt nach dem Fix zweier Bugs, die nur
       auf dem Gerät auffielen. `harbour-rpmvalidator` (`sfdk check`) läuft
       grün gegen einen Build exakt vom Release-Tag (ein Dirty-Git-Suffix in
-      der Version lässt ihn durchfallen — siehe Build-Hinweis oben). Noch
-      offen: Icons (aktuell Platzhalter), Übersetzungen (`de`/`en`) unter
-      `translations/`, Store-Assets
+      der Version lässt ihn durchfallen — siehe Build-Hinweis oben). Deutsche
+      Übersetzung liegt unter `translations/harbour-nemoai-de.ts` (UI-
+      Quelltexte sind seit 0.8.0 Englisch). Auch die Icons sind keine
+      Platzhalter mehr — Harbour behält den Robo-Kopf, `sailfishai` bekommt
+      ein rotes Totenkopf-Badge zur Unterscheidung auf einen Blick. Noch
+      offen: Store-Assets
 - [x] M4 Full-Target / OpenRepos — Kalender-/SMS-/`run_command`-Tools
       implementiert (siehe [Tools im Vollzugriffs-Build](#tools-im-vollzugriffs-build)
       oben); installiert und startet sauber, auf dem SDK-Emulator verifiziert,

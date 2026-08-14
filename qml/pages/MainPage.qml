@@ -18,24 +18,24 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: qsTr("Einstellungen")
+                text: qsTr("Settings")
                 onClicked: pageStack.push(Qt.resolvedUrl("SettingsPage.qml"))
             }
             MenuItem {
-                text: qsTr("Tools & Freigaben")
+                text: qsTr("Tools & Permissions")
                 onClicked: pageStack.push(Qt.resolvedUrl("ToolsPage.qml"))
             }
             MenuItem {
-                text: qsTr("Neue Konversation")
+                text: qsTr("New conversation")
                 onClicked: page.openConversation(
-                    History.createConversation(qsTr("Neue Konversation")))
+                    History.createConversation(qsTr("New conversation")))
             }
         }
 
         header: PageHeader {
             title: qsTr("AI Companion")
-            description: Caps.sandboxed ? qsTr("Store-Version")
-                                        : qsTr("Vollzugriff")
+            description: Caps.sandboxed ? qsTr("Store version")
+                                        : qsTr("Full access")
         }
 
         delegate: ListItem {
@@ -68,14 +68,14 @@ Page {
                     color: Theme.secondaryColor
                     text: modelData.preview.length
                           ? modelData.preview
-                          : qsTr("%n Nachricht(en)", "", modelData.messageCount)
+                          : qsTr("%n message(s)", "", modelData.messageCount)
                 }
             }
 
             menu: ContextMenu {
                 MenuItem {
-                    text: qsTr("Löschen")
-                    onClicked: item.remorseAction(qsTr("Löschen"), function() {
+                    text: qsTr("Delete")
+                    onClicked: item.remorseAction(qsTr("Delete"), function() {
                         History.deleteConversation(modelData.conversationId)
                     })
                 }
@@ -84,8 +84,8 @@ Page {
 
         ViewPlaceholder {
             enabled: view.count === 0
-            text: qsTr("Noch keine Konversation")
-            hintText: qsTr("Von oben ziehen, um zu starten")
+            text: qsTr("No conversations yet")
+            hintText: qsTr("Pull down to get started")
         }
 
         VerticalScrollDecorator {}

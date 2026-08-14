@@ -16,9 +16,9 @@ Page {
     // Muss zu ConsentGate::Sensitivity passen.
     function sensitivityLabel(level) {
         switch (level) {
-        case 0:  return qsTr("Systeminfo")
-        case 1:  return qsTr("Persönlich")
-        default: return qsTr("Kritisch")
+        case 0:  return qsTr("System info")
+        case 1:  return qsTr("Personal")
+        default: return qsTr("Critical")
         }
     }
 
@@ -31,10 +31,10 @@ Page {
         model: Tools.tools
 
         header: PageHeader {
-            title: qsTr("Tools & Freigaben")
+            title: qsTr("Tools & Permissions")
             description: Consent.localOnly
-                ? qsTr("Lokal — %1 aktiv, nichts verlässt das Gerät").arg(Tools.activeToolCount)
-                : qsTr("%1 aktiv").arg(Tools.activeToolCount)
+                ? qsTr("Local — %1 active, nothing leaves the device").arg(Tools.activeToolCount)
+                : qsTr("%1 active").arg(Tools.activeToolCount)
         }
 
         delegate: TextSwitch {
@@ -65,8 +65,9 @@ Page {
             wrapMode: Text.WordWrap
             font.pixelSize: Theme.fontSizeExtraSmall
             color: Theme.secondaryColor
-            text: qsTr("Ab „Persönlich“ wird vor jedem Zugriff nachgefragt und das "
-                       + "Ergebnis vor dem Versand anonymisiert.")
+            text: qsTr("From “Personal” onward, every access asks for "
+                       + "confirmation first, and the result is anonymised before "
+                       + "it's sent.")
         }
 
         VerticalScrollDecorator {}
