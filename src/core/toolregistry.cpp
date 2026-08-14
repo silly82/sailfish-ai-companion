@@ -1,5 +1,6 @@
 #include "toolregistry.h"
 #include "capabilities.h"
+#include "appsettings.h"
 #include "../platform/isystemprovider.h"
 
 #include <QDateTime>
@@ -50,7 +51,8 @@ void ToolRegistry::registerTool(Tool t)
 {
     // Der uebergebene Wert ist die Voreinstellung; die Entscheidung des
     // Nutzers ueberschreibt sie. Nie umgekehrt.
-    t.enabled = QSettings().value(settingsKey(t.name), t.enabled).toBool();
+    t.enabled = QSettings(appSettingsPath(), QSettings::IniFormat)
+                    .value(settingsKey(t.name), t.enabled).toBool();
     m_tools.append(t);
 }
 
@@ -171,7 +173,12 @@ void ToolRegistry::buildManifest()
     if (m_caps->automation()) {
         registerTool({"run_command",
                       "Führt ein Programm mit Argumenten auf dem Gerät aus und "
-                      "liefert Exit-Code sowie Ausgabe zurück.",
+                      "liefert Exit-Code sowie Ausgabe zurück. Es wird kein "
+                      "Terminal bereitgestellt — nur für nicht-interaktive "
+                      "Einzelaufrufe geeignet. Interaktive oder laufend "
+                      "aktualisierende Programme (z.B. `top` ohne `-n`) laufen "
+                      "nach 15s in einen Timeout statt eine Ausgabe zu liefern; "
+                      "ggf. eine nicht-interaktive Variante wählen (z.B. `top -n 1`).",
                       QJsonObject{
                           {"type", "object"},
                           {"properties", QJsonObject{
@@ -284,7 +291,7 @@ void ToolRegistry::setToolEnabled(const QString &name, bool enabled)
     if (i < 0 || m_tools.at(i).enabled == enabled) return;
 
     m_tools[i].enabled = enabled;
-    QSettings().setValue(settingsKey(name), enabled);
+    QSettings(appSettingsPath(), QSettings::IniFormat).setValue(settingsKey(name), enabled);
 
     // Eine zurueckgenommene Freischaltung nimmt die Sitzungsfreigabe mit —
     // sonst laeuft das Tool nach dem Wiedereinschalten ohne Nachfrage.

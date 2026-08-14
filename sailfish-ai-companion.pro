@@ -20,7 +20,7 @@ CONFIG(fullaccess) {
 }
 
 CONFIG += sailfishapp c++14
-QT     += network sql dbus
+QT     += network sql dbus contacts
 
 SOURCES += \
     src/main.cpp \
@@ -35,6 +35,7 @@ SOURCES += \
 
 HEADERS += \
     src/core/aiclient.h \
+    src/core/appsettings.h \
     src/core/conversationstore.h \
     src/core/toolregistry.h \
     src/core/consentgate.h \

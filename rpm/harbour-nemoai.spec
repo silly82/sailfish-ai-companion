@@ -17,6 +17,7 @@ BuildRequires: pkgconfig(Qt5Quick)
 BuildRequires: pkgconfig(Qt5Network)
 BuildRequires: pkgconfig(Qt5Sql)
 BuildRequires: pkgconfig(Qt5DBus)
+BuildRequires: pkgconfig(Qt5Contacts)
 BuildRequires: pkgconfig(sailfishsecrets)
 BuildRequires: desktop-file-utils
 

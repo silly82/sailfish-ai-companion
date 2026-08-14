@@ -4,6 +4,14 @@
 #include <QFile>
 #include <QDir>
 
+#include <QContactManager>
+#include <QContactDetailFilter>
+#include <QContactDisplayLabel>
+#include <QContactPhoneNumber>
+#include <QContactAddress>
+
+QTCONTACTS_USE_NAMESPACE
+
 SandboxedProvider::SandboxedProvider(QObject *parent) : ISystemProvider(parent) {}
 
 QVariantMap SandboxedProvider::unsupported()
@@ -120,9 +128,35 @@ QVariantMap SandboxedProvider::bluetoothDevices()
 
 QVariantMap SandboxedProvider::findContact(const QString &query)
 {
-    Q_UNUSED(query)
-    // TODO M2: org.nemomobile.contacts 1.0, read-only.
-    //          ACHTUNG: Ergebnis muss durch ConsentGate + Redaktion,
-    //          bevor es an ein Cloud-Modell geht.
-    return QVariantMap{{"error", "not_implemented"}};
+    // org.nemomobile.contacts.sqlite: dasselbe Backend, das Sailfish.Contacts
+    // (QML) intern nutzt. Ergebnis wird von ToolRegistry::invoke() als
+    // ConsentGate::Personal redigiert, bevor es an ein Cloud-Modell geht.
+    QContactManager manager(QStringLiteral("org.nemomobile.contacts.sqlite"));
+
+    QContactDetailFilter filter;
+    filter.setDetailType(QContactDisplayLabel::Type, QContactDisplayLabel::FieldLabel);
+    filter.setMatchFlags(QContactFilter::MatchContains);
+    filter.setValue(query);
+
+    QVariantList out;
+    for (const QContact &contact : manager.contacts(filter)) {
+        QStringList numbers;
+        for (const QContactPhoneNumber &phone : contact.details<QContactPhoneNumber>())
+            numbers.append(phone.number());
+
+        QStringList addresses;
+        for (const QContactAddress &address : contact.details<QContactAddress>()) {
+            QStringList parts{address.street(), address.locality()};
+            parts.removeAll(QString());
+            if (!parts.isEmpty())
+                addresses.append(parts.join(QStringLiteral(", ")));
+        }
+
+        out.append(QVariantMap{
+            {"name",      contact.detail<QContactDisplayLabel>().label()},
+            {"phones",    numbers},
+            {"addresses", addresses}
+        });
+    }
+    return QVariantMap{{"contacts", out}};
 }

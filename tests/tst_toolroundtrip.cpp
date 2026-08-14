@@ -2,6 +2,7 @@
 #include "fakes.h"
 
 #include "core/aiclient.h"
+#include "core/appsettings.h"
 #include "core/capabilities.h"
 #include "core/consentgate.h"
 #include "core/conversationstore.h"
@@ -65,7 +66,7 @@ QString roleOf(const QJsonObject &o)
 
 void TestToolRoundtrip::init()
 {
-    QSettings().clear();
+    QSettings(appSettingsPath(), QSettings::IniFormat).clear();
 }
 
 void TestToolRoundtrip::answersWithoutToolsInOneRound()

@@ -1,6 +1,7 @@
 #include "tst_toolregistry.h"
 #include "fakes.h"
 
+#include "core/appsettings.h"
 #include "core/capabilities.h"
 #include "core/consentgate.h"
 #include "core/toolregistry.h"
@@ -31,7 +32,7 @@ QStringList schemaNames(const QJsonArray &schema)
  */
 void TestToolRegistry::init()
 {
-    QSettings().clear();
+    QSettings(appSettingsPath(), QSettings::IniFormat).clear();
 }
 
 //! Fasst den immer gleichen Aufbau zusammen: Caps, Provider, Gate, Registry.

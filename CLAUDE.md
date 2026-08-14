@@ -100,6 +100,57 @@ Weg ueber Distributionspakete steht in der README. Aber: Desktop ist Qt 5.15, da
 Geraet Qt 5.6. Ein gruener Lauf ersetzt `sfdk build` nicht, deshalb in
 `src/core/` bei Qt-5.6-APIs bleiben.
 
+## Emulator fernsteuern (ohne Touch/Maus am Host)
+
+Für automatisierte UI-Tests im SDK-Emulator (VirtualBox), z. B. durch einen
+Agenten ohne eigenes Display:
+
+- **Status-Desync**: `sfdk emulator status` kann veraltet "running: yes"
+  melden, obwohl die VM laut `VBoxManage showvminfo <vm> --machinereadable
+  | grep VMState` längst `poweroff` ist. Im Zweifel `VBoxManage` direkt
+  fragen, nicht `sfdk` glauben; `sfdk emulator start` danach neu starten.
+- **Maus**: `xdotool` auf `DISPLAY=:1` (dort läuft die VirtualBoxVM-GUI)
+  funktioniert für Klicks/Drags. Fenster finden:
+  `xdotool search --name "SailfishOS.*VirtualBox"`. Das Phone-Display ist
+  1:1 in Pixeln in einem verschachtelten Kindfenster abgebildet — Offset
+  per `xwininfo -tree -id <top-level-id>` bestimmen, dann mit absoluten
+  Screen-Koordinaten arbeiten (`--window`-relative Koordinaten von xdotool
+  waren unzuverlässig/uneindeutig gemappt).
+- **Tastatur**: `xdotool key`/`type` kommt NICHT im Gast an (XTest-Events
+  erreichen die PS/2-Tastatur der VM nicht zuverlässig, auch nicht mit
+  `--window`/`windowfocus`). Stattdessen: `VBoxManage controlvm <vm>
+  keyboardputstring "…"` bzw. `keyboardputscancode <hex>…` für Sondertasten
+  (z. B. `1c 9c` = Enter, `0e … 8e …` = Backspace). Das injiziert
+  PS/2-Scancodes auf Hardware-Ebene, unabhängig vom X11-Fokus.
+- **Screenshot**: `VBoxManage controlvm <vm> screenshotpng <pfad>` für die
+  ganze VM; `import -window <fenster-id>` (ImageMagick, `DISPLAY=:1`) für
+  ein einzelnes X-Fenster inkl. exakter Pixel-Koordinaten zum Nachmessen.
+- **Seiten-Navigation**: Eine simulierte Links-Kante-Wisch-Geste (mousedown
+  am Rand, mehrere `mousemove_relative`-Schritte, mouseup) triggert
+  zuverlässig nur das App-Minimieren, nie ein `pageStack.pop()` — offenbar
+  verlangt Silicas Zurück-Geste echte Touch-Events, die diese Emulation
+  nicht liefert (auch nicht bei variierter Distanz/Geschwindigkeit). Statt
+  dagegen anzukämpfen: `pkill -f "/usr/bin/<app>\$"` gefolgt von
+  `DISPLAY=:0 invoker --type=silica-qt5 /usr/bin/<app>` setzt zuverlässig
+  auf die Root-Seite zurück (Pulldown-Menüs vorwärts funktionieren normal).
+- **Install-Dialog umgehen**: `sfdk deploy --sdk`/`--pkcon` hängt an einem
+  GUI-Bestätigungsdialog, der sich nicht headless beantworten lässt. Im
+  Emulator ist `sudo` für `defaultuser` passwortlos — RPM stattdessen direkt
+  installieren: `sudo rpm -Uvh --force <paket>.rpm`. Gleiches Muster für
+  Paketinstallation allgemein: `sudo pkcon install -y <paket>` statt
+  `pkcon install -y <paket>` (letzteres scheitert mit "Failed to obtain
+  authentication").
+- **Stale State im VM-Verzeichnis**: `sfdk build` baut in-place im
+  Projektverzeichnis; ein Wechsel Harbour↔Full-Access ohne vorheriges
+  Aufräumen linkt gegen Objektdateien aus dem falschen `CONFIG`
+  (`undefined reference to SandboxedProvider`/`FullProvider`). Vor jedem
+  Target-Wechsel: `rm -f *.o moc_*.cpp Makefile` im Projektroot.
+- **Target-Wechsel für `sfdk build`**: `sfdk config --push specfile
+  rpm/sailfishai.spec` ist nur "session scope" und überlebt keinen neuen
+  Prozess — muss mit `&&` in derselben Shell-Zeile wie der `sfdk build`-Aufruf
+  stehen, sonst baut trotzdem wieder `rpm/harbour-nemoai.spec` (globaler
+  Default aus `sfdk config`).
+
 ## Versionierung & Releases
 
 Semantic Versioning, `Version:` in beiden Specs (`rpm/sailfishai.spec`,

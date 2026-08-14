@@ -11,11 +11,38 @@
 #include <CommHistory/Group>
 #include <CommHistory/GroupModel>
 
+#include <QContactManager>
+#include <QContactDetailFilter>
+#include <QContactDisplayLabel>
+#include <QContactPhoneNumber>
+#include <QContactAddress>
+
+QTCONTACTS_USE_NAMESPACE
+
 #include <extendedcalendar.h>
 #include <sqlitestorage.h>
+#include <extendedstorageobserver.h>
 
 #include <algorithm>
+#include <QDebug>
 #include <QTimeZone>
+
+namespace {
+// mKCal::ExtendedStorage::open()/load() only return bool; the actual
+// SQLite/mKCal error text is delivered asynchronously to a registered
+// observer. Registered around the open()/load() calls below purely for
+// diagnostics -- no behavior change.
+class CalendarErrorLogger : public mKCal::ExtendedStorageObserver
+{
+public:
+    void storageFinished(mKCal::ExtendedStorage *storage, bool error, const QString &info) override
+    {
+        Q_UNUSED(storage)
+        if (error)
+            qWarning("FullProvider::upcomingEvents: mKCal storage error: %s", qPrintable(info));
+    }
+};
+}
 
 FullProvider::FullProvider(QObject *parent) : ISystemProvider(parent) {}
 
@@ -120,7 +147,39 @@ QVariantMap FullProvider::storageStatus()
 QVariantMap FullProvider::bluetoothDevices(){ return QVariantMap{{"error","not_implemented"}}; }
 
 QVariantMap FullProvider::findContact(const QString &query)
-{ Q_UNUSED(query) return QVariantMap{{"error","not_implemented"}}; }
+{
+    // org.nemomobile.contacts.sqlite: dasselbe Backend, das Sailfish.Contacts
+    // (QML) intern nutzt. Ergebnis wird von ToolRegistry::invoke() als
+    // ConsentGate::Personal redigiert, bevor es an ein Cloud-Modell geht.
+    QContactManager manager(QStringLiteral("org.nemomobile.contacts.sqlite"));
+
+    QContactDetailFilter filter;
+    filter.setDetailType(QContactDisplayLabel::Type, QContactDisplayLabel::FieldLabel);
+    filter.setMatchFlags(QContactFilter::MatchContains);
+    filter.setValue(query);
+
+    QVariantList out;
+    for (const QContact &contact : manager.contacts(filter)) {
+        QStringList numbers;
+        for (const QContactPhoneNumber &phone : contact.details<QContactPhoneNumber>())
+            numbers.append(phone.number());
+
+        QStringList addresses;
+        for (const QContactAddress &address : contact.details<QContactAddress>()) {
+            QStringList parts{address.street(), address.locality()};
+            parts.removeAll(QString());
+            if (!parts.isEmpty())
+                addresses.append(parts.join(QStringLiteral(", ")));
+        }
+
+        out.append(QVariantMap{
+            {"name",      contact.detail<QContactDisplayLabel>().label()},
+            {"phones",    numbers},
+            {"addresses", addresses}
+        });
+    }
+    return QVariantMap{{"contacts", out}};
+}
 
 QVariantMap FullProvider::recentMessages(int limit)
 {
@@ -168,7 +227,11 @@ QVariantMap FullProvider::upcomingEvents(int days)
         new mKCal::ExtendedCalendar(QTimeZone::systemTimeZone()));
     mKCal::ExtendedStorage::Ptr storage(new mKCal::SqliteStorage(calendar));
 
+    CalendarErrorLogger errorLogger;
+    storage->registerObserver(&errorLogger);
+
     if (!storage->open() || !storage->load(start, end)) {
+        storage->unregisterObserver(&errorLogger);
         storage->close();
         return QVariantMap{{"error", "query_failed"}};
     }
@@ -185,6 +248,7 @@ QVariantMap FullProvider::upcomingEvents(int days)
         });
     }
 
+    storage->unregisterObserver(&errorLogger);
     storage->close();
     return QVariantMap{{"events", out}};
 }

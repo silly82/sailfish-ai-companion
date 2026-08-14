@@ -4,12 +4,12 @@
 <context>
     <name>AIClient</name>
     <message>
-        <location filename="../src/core/aiclient.cpp" line="98"/>
+        <location filename="../src/core/aiclient.cpp" line="100"/>
         <source>No conversation open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/core/aiclient.cpp" line="182"/>
+        <location filename="../src/core/aiclient.cpp" line="184"/>
         <source>Cancelled — the model kept calling tools without stopping</source>
         <translation type="unfinished"></translation>
     </message>

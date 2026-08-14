@@ -6,22 +6,21 @@
 #include "tst_toolroundtrip.h"
 
 #include <QCoreApplication>
-#include <QSettings>
-#include <QTemporaryDir>
+#include <QStandardPaths>
 #include <QTest>
 
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
 
-    // ToolRegistry merkt sich die Freischaltungen in QSettings. Ohne eigenes
-    // Verzeichnis schriebe der Testlauf in die echten Einstellungen des
-    // Nutzers — und faende dort den Zustand des letzten Laufs vor.
-    QTemporaryDir settingsDir;
+    // ToolRegistry/AIClient merken sich Zustand ueber appSettings()
+    // (core/appsettings.h), das nach QStandardPaths::AppConfigLocation
+    // schreibt. Testmodus verlegt das in ein isoliertes Verzeichnis --
+    // ohne den Testlauf faende jeder Testlauf die echten Einstellungen
+    // des Nutzers und den Zustand des vorigen Laufs vor.
     QCoreApplication::setOrganizationName(QStringLiteral("sailfish-ai-companion-tests"));
     QCoreApplication::setApplicationName(QStringLiteral("core-tests"));
-    QSettings::setDefaultFormat(QSettings::IniFormat);
-    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, settingsDir.path());
+    QStandardPaths::setTestModeEnabled(true);
 
     int failed = 0;
     TestSseParser         sse;

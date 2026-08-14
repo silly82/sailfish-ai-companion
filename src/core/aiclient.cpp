@@ -1,4 +1,5 @@
 #include "aiclient.h"
+#include "appsettings.h"
 #include "conversationstore.h"
 #include "keystore.h"
 #include "openrouterbackend.h"
@@ -40,7 +41,8 @@ AIClient::AIClient(KeyStore *keys, ToolRegistry *tools, ConversationStore *store
     });
 
     // Nur die Modell-Kennung, nie der Key — der gehört in den KeyStore.
-    m_backend->setModel(QSettings().value(QStringLiteral("model")).toString());
+    m_backend->setModel(QSettings(appSettingsPath(), QSettings::IniFormat)
+                             .value(QStringLiteral("model")).toString());
 }
 
 void AIClient::connectBackend()
@@ -80,7 +82,7 @@ void AIClient::setModel(const QString &id)
 {
     if (m_backend->model() == id) return;
     m_backend->setModel(id);
-    QSettings().setValue(QStringLiteral("model"), id);
+    QSettings(appSettingsPath(), QSettings::IniFormat).setValue(QStringLiteral("model"), id);
     emit modelChanged();
 }
 

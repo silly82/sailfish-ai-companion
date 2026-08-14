@@ -47,6 +47,7 @@ SOURCES += \
 
 HEADERS += \
     ../src/core/aiclient.h \
+    ../src/core/appsettings.h \
     ../src/core/capabilities.h \
     ../src/core/consentgate.h \
     ../src/core/conversationstore.h \
