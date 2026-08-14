@@ -128,7 +128,12 @@ architectures, treat those two builds as unverified until a matching
 `5.0.0.x` target exists (there's no `i486`/`armv7hl` Jolla hardware to test
 against here either way).
 
-Run `sfdk check` before every store upload.
+Run `sfdk check` before every store upload — **from a checkout exactly on
+the release tag.** A dirty git-suffix version (e.g. `0.7.1+main.<timestamp>.
+<sha>`, added automatically whenever `HEAD` is ahead of the tag) fails the
+mandatory "RPM file name" check outright, not just a warning. If your
+working tree has moved past the tag, build from a separate checkout instead,
+e.g. `git worktree add ../check-v0.7.1 v0.7.1`.
 
 ### Development environment without the SDK
 
@@ -183,9 +188,11 @@ the target builds, so keep to Qt 5.6 APIs in `src/core/`.
       against a real model on-device (see M1)
 - [x] M3 Harbour release — API key now stored via `Sailfish.Secrets` (see
       [API key storage](#api-key-storage-sailfishsecrets) above), confirmed
-      on real hardware after fixing two on-device-only bugs. Still open:
-      `harbour-rpmvalidator` run, icons, translations (`de`/`en`) under
-      `translations/`, Store assets
+      on real hardware after fixing two on-device-only bugs.
+      `harbour-rpmvalidator` (`sfdk check`) passes clean against a build
+      from the exact release tag (a dirty git-suffix version fails it — see
+      the build note above). Still open: icons (currently placeholders),
+      translations (`de`/`en`) under `translations/`, Store assets
 - [x] M4 Full target / OpenRepos — calendar/SMS/`run_command` tools
       implemented (see [Full-access tools](#full-access-tools) above);
       installs and launches cleanly, verified on the SDK emulator, but the
@@ -332,7 +339,13 @@ ist dafür nur ein neueres Target verfügbar, gelten diese beiden Builds als
 ungeprüft, bis ein passendes `5.0.0.x`-Target existiert (für diese
 Architekturen gibt es hier ohnehin keine Jolla-Hardware zum Testen).
 
-`sfdk check` vor jedem Store-Upload ausführen.
+`sfdk check` vor jedem Store-Upload ausführen — **aus einem Checkout genau
+auf dem Release-Tag.** Ein Dirty-Git-Versions-Suffix (z. B.
+`0.7.1+main.<timestamp>.<sha>`, automatisch dabei, sobald `HEAD` dem Tag
+voraus ist) lässt den Pflichtcheck „RPM file name" komplett durchfallen,
+nicht nur eine Warnung. Steht der Arbeitsbaum weiter als der Tag, stattdessen
+aus einem separaten Checkout bauen, z. B. `git worktree add
+../check-v0.7.1 v0.7.1`.
 
 ### Entwicklungsumgebung ohne SDK
 
@@ -389,8 +402,11 @@ Target-Build nicht, in `src/core/` also bei Qt-5.6-APIs bleiben.
 - [x] M3 Harbour-Release — API-Key wird jetzt über `Sailfish.Secrets`
       gespeichert (siehe [API-Key-Ablage](#api-key-ablage-sailfishsecrets)
       oben), auf echter Hardware bestätigt nach dem Fix zweier Bugs, die nur
-      auf dem Gerät auffielen. Noch offen: `harbour-rpmvalidator`-Lauf,
-      Icons, Übersetzungen (`de`/`en`) unter `translations/`, Store-Assets
+      auf dem Gerät auffielen. `harbour-rpmvalidator` (`sfdk check`) läuft
+      grün gegen einen Build exakt vom Release-Tag (ein Dirty-Git-Suffix in
+      der Version lässt ihn durchfallen — siehe Build-Hinweis oben). Noch
+      offen: Icons (aktuell Platzhalter), Übersetzungen (`de`/`en`) unter
+      `translations/`, Store-Assets
 - [x] M4 Full-Target / OpenRepos — Kalender-/SMS-/`run_command`-Tools
       implementiert (siehe [Tools im Vollzugriffs-Build](#tools-im-vollzugriffs-build)
       oben); installiert und startet sauber, auf dem SDK-Emulator verifiziert,

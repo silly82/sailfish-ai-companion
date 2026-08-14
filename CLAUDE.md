@@ -158,12 +158,23 @@ Stolpersteine, auf die man beim Bauen aller sechs Kombinationen trifft:
   Weiteres — das reisst auch `RPMS/` mit bereits fertig gebauten Paketen mit).
 - **Versionsstring im RPM trägt einen Git-Suffix**
   (`X.Y.Z+main.<timestamp>.<sha>`), sobald `HEAD` nicht exakt auf dem Tag
-  `vX.Y.Z` steht (z. B. weil noch ein Doku-Commit nach dem Tag folgte). Das
-  ist nur die interne RPM-Version — vor dem Upload auf den sauberen Namen
-  `<paket>-X.Y.Z-1.<arch>.rpm` umkopieren, dann erst an den Release hängen.
+  `vX.Y.Z` steht (z. B. weil noch ein Doku-Commit nach dem Tag folgte). Für
+  reine GitHub-Release-Assets ist das nur kosmetisch — vor dem Upload auf den
+  sauberen Namen `<paket>-X.Y.Z-1.<arch>.rpm` umkopieren reicht. **Für
+  `sfdk check` reicht das Umbenennen nicht**: der Harbour-Validator liest die
+  echte RPM-Metadata, nicht den Dateinamen, und der Suffix lässt den
+  Pflichtcheck „RPM file name" mit `ERROR: rpm version must contain only
+  digits (0-9) and periods (.)` durchfallen (Validierung schlägt komplett
+  fehl, nicht nur eine Warnung). Für einen validator-grünen Build also aus
+  einem Checkout **exakt auf dem Release-Tag** bauen — notfalls über ein
+  temporäres `git worktree add <pfad> vX.Y.Z` **unterhalb des
+  SDK-Workspace-Roots** (`sfdk config` zeigt ihn; `sfdk build`/`check`
+  verweigern den Dienst ausserhalb davon, z. B. unter `/tmp`).
 
 Ablauf kurz: alle sechs bauen → sauber umbenennen → `gh release upload
-vX.Y.Z <dateien>` → `gh release edit vX.Y.Z --draft=false`.
+vX.Y.Z <dateien>` → `gh release edit vX.Y.Z --draft=false`. Vor einem
+Store-Upload zusätzlich `sfdk check` gegen einen Tag-exakten Harbour-Build
+laufen lassen (s. o.).
 
 ## Nächster Schritt
 
@@ -239,9 +250,21 @@ aufgefallen (Desktop-Tests und Emulator zeigen sie nicht):
    Key-Speichern — der Datenblob wird mit dem Fix trotzdem verschlüsselt,
    das ist ja der Zweck des Encryption-Plugins.
 
-Noch offen für M3: `harbour-rpmvalidator` gegen den neuen Build laufen lassen
-(`sfdk check`, hier ohne SDK nicht geprüft), Icons, Übersetzungen (de/en) unter
-`translations/` anlegen, Store-Assets.
+`harbour-rpmvalidator` (`sfdk check`) lief gegen einen `aarch64`-Build exakt
+auf dem `v0.7.1`-Tag: **„Validation succeeded"**, nur eine nicht blockierende
+Warnung (`file is not stripped!` — rpmlint, kein Store-Blocker; die
+`brp-strip`-Skripte laufen laut Build-Log, das Binary bleibt trotzdem
+ungestrippt, noch nicht weiter untersucht). Dabei fiel ein zunächst harter
+Fehler auf: gegen den `HEAD`-Stand (zwei Commits nach dem Tag) gebaut, schlug
+der Pflichtcheck „RPM file name" fehl, weil die RPM-Metadata den
+Dirty-Git-Versions-Suffix trägt (`0.7.1+main.<timestamp>.<sha>` statt
+`0.7.1`) — Harbour erlaubt in der Version nur Ziffern und Punkte. Für den
+validator-tauglichen Build stattdessen aus einem `git worktree add
+<pfad-unter-dem-sdk-workspace> vX.Y.Z`-Checkout gebaut (Details im
+Stolperstein oben unter „Versionierung & Releases").
+
+Noch offen für M3: Icons (aktuell Platzhalter, s. u.), Übersetzungen (de/en)
+unter `translations/` anlegen, Store-Assets/Screenshots.
 
 Version auf 0.7.1 (Patch — beides Bugfixes an 0.7.0, kein neues Feature).
 
