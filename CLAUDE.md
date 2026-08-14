@@ -109,12 +109,37 @@ je einmal pro Plattform (`aarch64`, `i486`):
 - `sailfishai-X.Y.Z-1.aarch64.rpm`
 - `sailfishai-X.Y.Z-1.i486.rpm`
 
-Tag + GitHub-Release (`gh release create vX.Y.Z --draft ...`) entstehen
-automatisch als Teil des Versionsbump-Commits — ohne dass extra danach
-gefragt werden muss. Diese Umgebung hat kein Sailfish-SDK, kann also keine
-RPMs bauen; der Release bleibt deshalb als **Draft** stehen, bis die vier
-RPMs lokal über `sfdk` gebaut, hochgeladen und der Draft veröffentlicht
-wurde.
+Tag, GitHub-Release, alle vier RPM-Builds und der Asset-Upload gehören zum
+Versionsbump dazu — passiert automatisch, ohne dass extra danach gefragt
+werden muss. `~/SailfishOS/bin/sfdk` (nicht auf `$PATH`) hat eine laufende
+Build-Engine mit `SailfishOS-5.1.0.11` für `aarch64`/`armv7hl`/`i486`.
+
+Stolpersteine, auf die man beim Bauen aller vier Kombinationen trifft:
+
+- **Config-Scope überlebt keinen neuen Shell-Aufruf.** `sfdk config target=…`
+  (Session-Scope) gilt nur innerhalb desselben Shell-Prozesses — jeder
+  eigenständige Tool-Aufruf startet effektiv neu und fällt sonst still auf
+  die zuletzt global gesetzte Target/Spec-Kombination zurück. Stattdessen pro
+  Build-Befehl explizit auf Command-Scope setzen:
+  `sfdk -c target=SailfishOS-5.1.0.11-aarch64 -c specfile=rpm/harbour-nemoai.spec build`.
+- **Build passiert in-place, nicht in einem Shadow-Build-Verzeichnis** (kein
+  `<project-dir-or-file>`-Argument an `build` übergeben). `.o`/`moc_*`-Dateien
+  vom letzten Build bleiben im Arbeitsbaum liegen und werden beim nächsten
+  Architektur-/Target-Wechsel mit eingelinkt — Ergebnis ein
+  ABI-Mismatch-Linkerfehler (`undefined reference to operator delete(void*,
+  unsigned int)`/`QArrayData::deallocate(...)`, weil 32-Bit- und
+  64-Bit-Objektdateien gemischt werden). Vor jedem Build mit anderem
+  Target/Spec aufräumen: `rm -f Makefile *.o moc_*.cpp moc_*.o
+  harbour-nemoai sailfishai documentation.list` (nicht `git clean -xdf` ohne
+  Weiteres — das reisst auch `RPMS/` mit bereits fertig gebauten Paketen mit).
+- **Versionsstring im RPM trägt einen Git-Suffix**
+  (`X.Y.Z+main.<timestamp>.<sha>`), sobald `HEAD` nicht exakt auf dem Tag
+  `vX.Y.Z` steht (z. B. weil noch ein Doku-Commit nach dem Tag folgte). Das
+  ist nur die interne RPM-Version — vor dem Upload auf den sauberen Namen
+  `<paket>-X.Y.Z-1.<arch>.rpm` umkopieren, dann erst an den Release hängen.
+
+Ablauf kurz: alle vier bauen → sauber umbenennen → `gh release upload
+vX.Y.Z <dateien>` → `gh release edit vX.Y.Z --draft=false`.
 
 ## Nächster Schritt
 
