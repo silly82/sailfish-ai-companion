@@ -5,10 +5,13 @@
 #include <QStandardPaths>
 
 /*
- * M1-Ablage: Datei mit 0600 im App-Datenordner. Das ist die dokumentierte
- * Fallback-Variante des Full-Targets und reicht, um den Chat zum Laufen zu
- * bringen. M3 ersetzt das im Harbour-Build durch Sailfish.Secrets — bis dahin
- * darf die Store-Version nicht ausgeliefert werden.
+ * Datei mit 0600 im App-Datenordner. Das ist die dokumentierte
+ * Fallback-Variante des Full-Targets (unsandboxed, Dateisystem sowieso
+ * frei zugaenglich) und wird ausserdem von den Desktop-Tests gebaut, die
+ * kein Sailfish.Secrets zur Verfuegung haben. Der Harbour-Build nutzt
+ * stattdessen platform/sandboxed/keystore_secrets.cpp (M3) — dieselbe
+ * KeyStore-Klasse, andere Implementierung, ueber CONFIG(harbour)/
+ * CONFIG(fullaccess) im .pro-File verdrahtet statt per #ifdef.
  */
 
 namespace {

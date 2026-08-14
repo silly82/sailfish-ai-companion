@@ -29,7 +29,6 @@ SOURCES += \
     src/core/toolregistry.cpp \
     src/core/consentgate.cpp \
     src/core/capabilities.cpp \
-    src/core/keystore.cpp \
     src/core/openrouterbackend.cpp \
     src/core/localserverbackend.cpp \
     src/core/sseparser.cpp
@@ -48,11 +47,14 @@ HEADERS += \
     src/platform/isystemprovider.h
 
 harbour {
-    SOURCES += src/platform/sandboxed/sandboxedprovider.cpp
+    SOURCES += src/platform/sandboxed/sandboxedprovider.cpp \
+               src/platform/sandboxed/keystore_secrets.cpp
     HEADERS += src/platform/sandboxed/sandboxedprovider.h
+    PKGCONFIG += sailfishsecrets
 }
 fullaccess {
-    SOURCES += src/platform/full/fullprovider.cpp
+    SOURCES += src/platform/full/fullprovider.cpp \
+               src/core/keystore.cpp
     HEADERS += src/platform/full/fullprovider.h
     PKGCONFIG += commhistory-qt5 libmkcal-qt5 KF5CalendarCore
 }

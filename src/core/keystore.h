@@ -7,8 +7,10 @@
  * API-Key-Ablage. Wrapper, weil Jolla für Sailfish.Secrets ausdrücklich
  * KEINE Backwards-Compat zwischen Releases garantiert.
  *
- *   Harbour : Sailfish.Secrets 1.0  (Permission "Secrets" im .desktop)
- *   Full    : dito, Fallback auf Datei mit 0600 im App-Datenordner
+ *   Harbour : Sailfish.Secrets 1.0  (Permission "Secrets" im .desktop) —
+ *             src/platform/sandboxed/keystore_secrets.cpp
+ *   Full    : Datei mit 0600 im App-Datenordner — src/core/keystore.cpp,
+ *             auch von den Desktop-Tests genutzt (kein Secrets dort)
  *
  * Der Key darf niemals im Klartext geloggt oder in QSettings landen.
  */
