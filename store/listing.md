@@ -1,9 +1,22 @@
 # Jolla Store listing
 
 Draft copy for the Harbour submission form. Screenshots are in
-`store/screenshots/` — emulator captures at the SDK's default 336×798
-resolution, good enough as placeholders/reference; real-device screenshots
-at native resolution should replace them before the actual submission.
+`store/screenshots/` — `01`–`04` are emulator captures at the SDK's default
+336×798 resolution (below the Store's stated 1080px-wide minimum), kept only
+as reference. `de-01`–`de-04` are real-device captures (Jolla Phone 2026,
+1032×2272, aarch64, Sailfish OS 5.2.0.16) taken 2026-08-14 — use these for
+submission. Device system language was German at capture time, so the app
+UI is German throughout; per-decision, submit the form with **both** an
+English and a German language variant of the Details section (below) rather
+than re-capturing in English. Upload order/pick for the 3-screenshot slot:
+`de-01-conversations.png`, `de-02-pulley-menu.png`, `de-03-settings.png`.
+`de-04-chat-active.png` (open chat, model + active-tools header, empty
+message list) is a spare if a 4th slot or a replacement is ever wanted.
+
+Known cosmetic bug visible in `de-01-conversations.png`: the third
+conversation preview renders literal `**5 Stunden und 47 Minuten**` —
+the chat view doesn't parse Markdown bold out of the model's reply. Not
+fixed as part of this listing pass; flagged for a separate fix.
 
 Category: **Utilities** (alternatively **Internet** — the app is a chat
 client, but its defining feature is the on-device tool/consent layer, which
@@ -76,3 +89,40 @@ Kontakte, Bluetooth und Uhrzeit — rund 8 Tools. Ein separater, unsandboxed
 Vollzugriffs-Build auf OpenRepos ergänzt Kalender, SMS und lokale
 Befehlsausführung für alle, die das wollen — dieselbe App, dieselbe
 Oberfläche, mehr Rechte, nie umgekehrt.
+
+---
+
+## Form fields beyond the description
+
+**Title:** AI Companion (12 chars)
+
+**Summary** (≤200 chars, shown under the title in listings):
+- EN: `Chat with an AI that can look at your device — with your permission, every time.` (83 chars)
+- DE: `Chat mit einer KI, die aufs Gerät schauen darf — mit deiner Erlaubnis, jedes Mal neu.` (87 chars)
+
+**Category:** Utilities
+
+**Recent changes** (first release, ≤2000 chars):
+
+> Initial release (0.8.0).
+>
+> - Streaming chat against any OpenRouter model, with a live, always-current model list — nothing hardcoded.
+> - Consent-gated tool calling: battery, network, time, and contacts. Every access above "system info" sensitivity is shown and confirmed before anything leaves the device.
+> - On-device redaction: personal data is replaced with placeholders before a request reaches the model, resolved back only in the reply, locally.
+> - Local conversation history via SQLite; API key stored via Sailfish.Secrets, never logged, never in plain settings storage.
+
+**Contact details:**
+- Email: siliwalker@gmail.com
+- Website / Open source project URL: https://github.com/silly82/sailfish-ai-companion
+- Privacy policy: `docs/privacy.md` in the repo (link the rendered GitHub URL once pushed, e.g. `https://github.com/silly82/sailfish-ai-companion/blob/main/docs/privacy.md`)
+
+**Message to QA:**
+
+> AI Companion requires the reviewer's own OpenRouter API key
+> (https://openrouter.ai) to chat — there's no bundled test account, since
+> shipping one would mean sharing a paid key. A free OpenRouter signup and
+> its free-tier models are enough to exercise chat and tool calling.
+> On the first tool call above "system info" sensitivity (e.g. reading a
+> contact), the app shows a consent dialog before anything is sent —
+> expect and confirm this prompt during review. No other login or account
+> is required.
