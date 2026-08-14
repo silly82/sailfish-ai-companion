@@ -1,4 +1,5 @@
 #include <QtQuick>
+#include <QTranslator>
 #include <sailfishapp.h>
 
 #include "core/capabilities.h"
@@ -22,6 +23,20 @@ int main(int argc, char *argv[])
     // that determines which paths under ~/.local/share etc. the sandbox
     // whitelists for QStandardPaths::AppDataLocation and friends.
     app->setOrganizationName(QStringLiteral("ch.silly"));
+
+    // Only translations/harbour-nemoai-de.ts is maintained (see CLAUDE.md);
+    // sailfishapp_i18n installs the resulting .qm under
+    // /usr/share/$${TARGET}/translations/, but SailfishApp's own automatic
+    // translator looks for a catalog matching the *binary* name. For
+    // TARGET=sailfishai that search (sailfishai-de.qm) never matches the
+    // shipped harbour-nemoai-de.qm, so the fullaccess build silently stayed
+    // on English regardless of device locale. Load the real catalog name
+    // explicitly so both targets pick it up.
+    auto *translator = new QTranslator(app.data());
+    const QString translationsDir = SailfishApp::pathTo(QStringLiteral("translations")).toLocalFile();
+    if (translator->load(QLocale(), QStringLiteral("harbour-nemoai"), QStringLiteral("-"), translationsDir)) {
+        app->installTranslator(translator);
+    }
 
     auto *caps  = new Capabilities(app.data());
     auto *gate  = new ConsentGate(app.data());

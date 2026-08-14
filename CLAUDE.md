@@ -588,4 +588,24 @@ Default-Profil).
 Version 0.9.2 (Patch — `find_contact` bis zum Root-Cause-Fix ausgegraut,
 kein Feature-Zuwachs).
 
+**Bug 4 — `sailfishai` (Full-Access) zeigt die UI immer auf Englisch,
+`harbour-nemoai` korrekt auf Deutsch bei deutscher Gerätesprache.** Beide
+Pakete installiert und im Vergleich aufgefallen. Ursache in
+`sailfishapp_i18n.prf` (Teil des SDK, nicht des Projekts):
+`qm.path = /usr/share/$${TARGET}/translations` installiert die `.qm` zwar
+pro Target in einen eigenen Ordner, der Dateiname selbst bleibt aber der
+in `TRANSLATIONS` fest eingetragene `harbour-nemoai-de.qm` — unabhängig
+vom Target. `SailfishApp::application()` lädt beim Start automatisch einen
+Katalog, dessen Name zum Binary passt (`sailfishai-de.qm` bzw.
+`harbour-nemoai-de.qm`). Für `harbour-nemoai` matcht das zufällig
+(Binary-Name == Katalog-Name), für `sailfishai` nicht — der gesuchte
+Katalog `sailfishai-de.qm` existiert schlicht nicht, stiller Fallback aufs
+Quelltext-Englisch, unabhängig von der Systemsprache. Fix: in `main.cpp`
+zusätzlich explizit ein `QTranslator` auf den echten, hart auf
+`harbour-nemoai` benannten Katalog geladen (statt sich auf den
+automatischen, am Binary-Namen hängenden Load zu verlassen) — trifft
+beide Targets, kein Eingriff in `.pro`/`.prf` nötig.
+
+Version 0.9.3 (Patch — Übersetzungs-Katalog-Fix für `sailfishai`).
+
 Detailkonzept: `docs/konzept-v2.md`
