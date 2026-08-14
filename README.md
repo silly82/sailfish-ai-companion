@@ -195,13 +195,19 @@ the target builds, so keep to Qt 5.6 APIs in `src/core/`.
       `translations/harbour-nemoai-de.ts` (UI source strings are English
       as of 0.8.0). Icons are no longer placeholders either — Harbour keeps
       the robot glyph, `sailfishai` adds a red skull badge so the two
-      variants are distinguishable at a glance. Still open: Store assets
+      variants are distinguishable at a glance. Store listing text and
+      screenshots are in `store/` — screenshots are emulator captures at
+      336×798 (lower than real device resolution); replace with real
+      hardware shots before actually submitting. M3 is otherwise complete
 - [x] M4 Full target / OpenRepos — calendar/SMS/`run_command` tools
       implemented (see [Full-access tools](#full-access-tools) above);
-      installs and launches cleanly, verified on the SDK emulator, but the
-      full in-app flow (granting tool consent, sending a message) is not
-      yet click-tested — only physical devices or a VNC/RDP-capable setup
-      can drive touch input into the emulator
+      installs and launches cleanly, verified on the SDK emulator including
+      real navigation (conversation list, pulley menu, Settings, Tools &
+      Permissions) driven by a small `uinput`-based touch injector — no
+      VNC/RDP setup needed, see CLAUDE.md for how. The one flow still not
+      click-tested is an actual message send with tool consent, since that
+      needs a real API key against a live cloud model, not available in
+      this environment
 - [ ] M5 Local inference
 - [ ] M6 Voice
 
@@ -411,14 +417,21 @@ Target-Build nicht, in `src/core/` also bei Qt-5.6-APIs bleiben.
       Übersetzung liegt unter `translations/harbour-nemoai-de.ts` (UI-
       Quelltexte sind seit 0.8.0 Englisch). Auch die Icons sind keine
       Platzhalter mehr — Harbour behält den Robo-Kopf, `sailfishai` bekommt
-      ein rotes Totenkopf-Badge zur Unterscheidung auf einen Blick. Noch
-      offen: Store-Assets
+      ein rotes Totenkopf-Badge zur Unterscheidung auf einen Blick.
+      Store-Listing-Text und Screenshots liegen unter `store/` —
+      Screenshots sind Emulator-Aufnahmen bei 336×798 (niedriger als echte
+      Geräteauflösung), vor der eigentlichen Einreichung durch Aufnahmen von
+      echter Hardware ersetzen. Damit ist M3 sonst abgeschlossen
 - [x] M4 Full-Target / OpenRepos — Kalender-/SMS-/`run_command`-Tools
       implementiert (siehe [Tools im Vollzugriffs-Build](#tools-im-vollzugriffs-build)
-      oben); installiert und startet sauber, auf dem SDK-Emulator verifiziert,
-      der volle In-App-Ablauf (Tool-Consent erteilen, Nachricht senden) aber
-      noch nicht durchgeklickt — nur echte Geräte oder ein
-      VNC/RDP-fähiges Setup können Touch-Eingaben in den Emulator steuern
+      oben); installiert und startet sauber, auf dem SDK-Emulator verifiziert
+      inklusive echter Navigation (Konversationsliste, Pulley-Menü,
+      Einstellungen, Tools & Freigaben) über einen kleinen
+      `uinput`-basierten Touch-Injektor — kein VNC/RDP-Setup nötig, siehe
+      CLAUDE.md für den Weg dahin. Einzig eine echte Nachricht mit
+      Tool-Consent ist noch nicht durchgeklickt, da das einen echten
+      API-Key gegen ein laufendes Cloud-Modell braucht, den es in dieser
+      Umgebung nicht gibt
 - [ ] M5 Lokale Inferenz
 - [ ] M6 Sprachein- und -ausgabe
 

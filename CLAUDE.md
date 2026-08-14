@@ -295,7 +295,41 @@ Icons sind jetzt auch keine Platzhalter mehr (Commit `fcbf3c1`): Harbour
 behält den Robo-Kopf, `sailfishai` bekommt zusätzlich ein rotes
 Totenkopf-Badge, damit die beiden Varianten auf einen Blick unterscheidbar
 sind und das Risiko der unsandboxed Full-Variante visuell offensichtlich
-ist. Noch offen für M3: Store-Assets/Screenshots.
+ist.
+
+Store-Assets angelegt (`store/`): Listing-Text (Kurz- + Langbeschreibung,
+en/de) in `store/listing.md`, dazu vier Screenshots in
+`store/screenshots/` (leere Konversationsliste, Pulley-Menü,
+Settings, Tools & Permissions) — echte Chat-Inhalte fehlen bewusst, dafür
+bräuchte es einen echten API-Key gegen ein Cloud-Modell, den es hier nicht
+gibt; nur die alte Test-Konversation mit Tippfehlern war vorhanden und war
+als Store-Bild ungeeignet, deshalb gelöscht statt verwendet. Aufgenommen auf
+dem SDK-Emulator (336×798, niedriger als echte Geräteauflösung) — vor der
+tatsächlichen Einreichung durch Screenshots von echter Hardware ersetzen.
+
+**Wie man den Emulator ohne VNC/Touch-Setup bedient** (das
+`README`-Statusfeld unter M4 nannte das bisher als Einschränkung): Der
+Emulator hat kein Touchscreen-Device, das auf Klicks reagiert — `sfdk`
+selbst kann nur Tastatur (`keyboardputscancode`) senden, keine Maus/Touch.
+Lösung: ein winziges `uinput`-Programm (multitouch Protokoll B — reines
+`ABS_X`/`ABS_Y` + `BTN_TOUCH` ohne `ABS_MT_*`/`INPUT_PROP_DIRECT` wird von
+udev nicht als Touchscreen erkannt und von Lipstick ignoriert), gebaut mit
+`sfdk engine exec sb2 -t SailfishOS-5.1.0.11-i486 gcc -o touchinject
+touchinject.c` (kein natives `gcc` im Emulator, kein `-static` möglich —
+keine statische libc im Target-Sysroot), dann per `scp` auf den Emulator
+kopiert und per SSH ausgeführt (`root@127.0.0.1:2223`,
+Schlüssel `~/SailfishOS/vmshare/ssh/private_keys/sdk`). Bildschirm ist
+initial gesperrt — `req_display_state_on`/`req_tklock_mode_change` per
+`dbus-send` reicht nicht zum Aufwecken der Anzeige, erst ein echter Swipe
+per `touchinject swipe` entsperrt. Screenshots selbst kommen NICHT aus
+`/dev/fb0` im Gast (das bleibt weiss — vermutlich ungenutzt, da die
+GPU-Ausgabe an VirtualBox vorbei komponiert wird), sondern über
+`VBoxManage controlvm "SailfishOS-5.1.0.11" screenshotpng <datei>` auf dem
+Host — das trifft den tatsächlich komponierten Frame.
+
+Kein neuer Versionsbump/Release für die Store-Assets — `store/` ist reines
+Einreichungsmaterial, landet in keinem RPM, der Paketinhalt ändert sich
+nicht.
 
 Version auf 0.8.0 (Minor — neues Feature: Deutsch als vollständige
 Übersetzung, App-UI-Quellsprache jetzt Englisch).
