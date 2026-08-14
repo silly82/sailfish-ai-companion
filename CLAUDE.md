@@ -100,21 +100,29 @@ für beide Targets.
   Z. B. 0.6.6 → 0.7.0.
 
 Jede Versionserhöhung bekommt ein GitHub-Release (Tag `vX.Y.Z`). Ein Release
-ohne RPM-Assets ist unvollständig — Pflicht sind vier Dateien, gebaut über
+ohne RPM-Assets ist unvollständig — Pflicht sind sechs Dateien, gebaut über
 `sfdk build` (Harbour) und `sfdk build -- --define "fullaccess 1"` (Full),
-je einmal pro Plattform (`aarch64`, `i486`):
+je einmal pro Plattform (`aarch64`, `armv7hl`, `i486`):
 
 - `harbour-nemoai-X.Y.Z-1.aarch64.rpm`
+- `harbour-nemoai-X.Y.Z-1.armv7hl.rpm`
 - `harbour-nemoai-X.Y.Z-1.i486.rpm`
 - `sailfishai-X.Y.Z-1.aarch64.rpm`
+- `sailfishai-X.Y.Z-1.armv7hl.rpm`
 - `sailfishai-X.Y.Z-1.i486.rpm`
 
-Tag, GitHub-Release, alle vier RPM-Builds und der Asset-Upload gehören zum
+**`armv7hl` wird nur gebaut, nicht getestet** — kein `armv7hl`-Gerät
+vorhanden (s. Zielhardware, beide Geräte sind `aarch64`). Baut sauber gegen
+`SailfishOS-5.1.0.11-armv7hl` durch, lief aber nie auf echter Hardware.
+Sollte jemand mit einem `armv7hl`-Jolla-Gerät (z. B. Jolla 1, Jolla C) einen
+Bug melden, gilt das nicht automatisch für `aarch64` und umgekehrt.
+
+Tag, GitHub-Release, alle sechs RPM-Builds und der Asset-Upload gehören zum
 Versionsbump dazu — passiert automatisch, ohne dass extra danach gefragt
 werden muss. `~/SailfishOS/bin/sfdk` (nicht auf `$PATH`) hat eine laufende
 Build-Engine mit `SailfishOS-5.1.0.11` für `aarch64`/`armv7hl`/`i486`.
 
-Stolpersteine, auf die man beim Bauen aller vier Kombinationen trifft:
+Stolpersteine, auf die man beim Bauen aller sechs Kombinationen trifft:
 
 - **Config-Scope überlebt keinen neuen Shell-Aufruf.** `sfdk config target=…`
   (Session-Scope) gilt nur innerhalb desselben Shell-Prozesses — jeder
@@ -138,7 +146,7 @@ Stolpersteine, auf die man beim Bauen aller vier Kombinationen trifft:
   ist nur die interne RPM-Version — vor dem Upload auf den sauberen Namen
   `<paket>-X.Y.Z-1.<arch>.rpm` umkopieren, dann erst an den Release hängen.
 
-Ablauf kurz: alle vier bauen → sauber umbenennen → `gh release upload
+Ablauf kurz: alle sechs bauen → sauber umbenennen → `gh release upload
 vX.Y.Z <dateien>` → `gh release edit vX.Y.Z --draft=false`.
 
 ## Nächster Schritt
