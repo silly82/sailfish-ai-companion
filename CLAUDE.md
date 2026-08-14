@@ -89,6 +89,26 @@ Weg ueber Distributionspakete steht in der README. Aber: Desktop ist Qt 5.15, da
 Geraet Qt 5.6. Ein gruener Lauf ersetzt `sfdk build` nicht, deshalb in
 `src/core/` bei Qt-5.6-APIs bleiben.
 
+## Versionierung & Releases
+
+Semantic Versioning, `Version:` in beiden Specs (`rpm/sailfishai.spec`,
+`rpm/harbour-nemoai.spec`) muss immer synchron sein — ein Trunk, eine Version
+für beide Targets.
+
+- **Bugfix** → Patch-Stelle erhöhen (`x.x.1`), z. B. 0.6.5 → 0.6.6.
+- **Feature** → Minor-Stelle erhöhen (`x.1.x`), Patch zurück auf 0.
+  Z. B. 0.6.6 → 0.7.0.
+
+Jede Versionserhöhung bekommt ein GitHub-Release (Tag `vX.Y.Z`). Ein Release
+ohne RPM-Assets ist unvollständig — Pflicht sind vier Dateien, gebaut über
+`sfdk build` (Harbour) und `sfdk build -- --define "fullaccess 1"` (Full),
+je einmal pro Plattform (`aarch64`, `i486`):
+
+- `harbour-nemoai-X.Y.Z-1.aarch64.rpm`
+- `harbour-nemoai-X.Y.Z-1.i486.rpm`
+- `sailfishai-X.Y.Z-1.aarch64.rpm`
+- `sailfishai-X.Y.Z-1.i486.rpm`
+
 ## Nächster Schritt
 
 `get_battery_status`/`get_network_status` waren in beiden Providern
