@@ -237,6 +237,7 @@ nach lieferbaren Meilensteinen statt nach Wochen:
 ### M5 — Lokale Inference
 - llama.cpp-Integration, Modell-Downloader, Speicherwarnung
 - erst in B, bei Erfolg Backport nach A
+- Bauplan: [`konzept-m5.md`](konzept-m5.md)
 
 ### M6 — Voice
 - QtMultimedia-Aufnahme → STT
