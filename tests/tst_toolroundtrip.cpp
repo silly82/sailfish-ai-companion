@@ -155,19 +155,19 @@ void TestToolRoundtrip::stopsAfterTooManyToolRounds()
 void TestToolRoundtrip::deniedConsentReachesTheModel()
 {
     Fixture f;
-    f.registry.setToolEnabled(QStringLiteral("find_contact"), true);
+    f.registry.setToolEnabled(QStringLiteral("get_upcoming_events"), true);
     f.backend.script.append({QString(),
-                             {{"c1", "find_contact", {{"query", "Anna"}}}}});
+                             {{"c1", "get_upcoming_events", {{"days", 3}}}}});
     f.backend.script.append({QStringLiteral("Ich darf nicht nachsehen."), {}});
 
     QSignalSpy asked(&f.client, &AIClient::consentRequired);
-    f.send(QStringLiteral("Wie ist Annas Nummer?"));
+    f.send(QStringLiteral("Was steht diese Woche an?"));
 
     // Der Roundtrip haelt an dieser Stelle an: ein Request, keine Antwort.
     QCOMPARE(asked.count(), 1);
-    QCOMPARE(asked.at(0).at(0).toString(), QStringLiteral("find_contact"));
+    QCOMPARE(asked.at(0).at(0).toString(), QStringLiteral("get_upcoming_events"));
     QCOMPARE(f.backend.requests.size(), 1);
-    QVERIFY(f.provider.lastQuery.isEmpty());
+    QCOMPARE(f.provider.lastDays, -1);
 
     f.client.resolveConsent(false);
 
@@ -178,33 +178,33 @@ void TestToolRoundtrip::deniedConsentReachesTheModel()
     QCOMPARE(roleOf(result), QStringLiteral("tool"));
     QVERIFY(result.value(QStringLiteral("content")).toString()
                 .contains(QStringLiteral("denied_by_user")));
-    QVERIFY(f.provider.lastQuery.isEmpty());
+    QCOMPARE(f.provider.lastDays, -1);
 }
 
 void TestToolRoundtrip::grantedConsentRunsTheToolRedacted()
 {
     Fixture f;
-    f.registry.setToolEnabled(QStringLiteral("find_contact"), true);
+    f.registry.setToolEnabled(QStringLiteral("get_upcoming_events"), true);
     f.backend.script.append({QString(),
-                             {{"c1", "find_contact", {{"query", "Anna"}}}}});
-    f.backend.script.append({QStringLiteral("Ich rufe sie an."), {}});
+                             {{"c1", "get_upcoming_events", {{"days", 3}}}}});
+    f.backend.script.append({QStringLiteral("Du hast einen Termin."), {}});
 
-    f.send(QStringLiteral("Ruf Anna an"));
+    f.send(QStringLiteral("Was steht diese Woche an?"));
     f.client.resolveConsent(true);
 
-    QCOMPARE(f.provider.lastQuery, QStringLiteral("Anna"));
+    QCOMPARE(f.provider.lastDays, 3);
     QCOMPARE(f.backend.requests.size(), 2);
 
     const QString content =
         f.messageAt(1, -1).value(QStringLiteral("content")).toString();
-    QVERIFY(content.contains(QStringLiteral("Anna Muster")));
-    // Die Nummer selbst erreicht das Modell nie.
-    QVERIFY(!content.contains(QStringLiteral("79 123 45 67")));
+    QVERIFY(content.contains(QStringLiteral("Team Meeting")));
+    // Die Adresse selbst erreicht das Modell nie.
+    QVERIFY(!content.contains(QStringLiteral("Bahnhofstrasse")));
     QVERIFY(content.contains(QStringLiteral("<contact:")));
 
     // ... und wird erst in der Ausgabe wieder eingesetzt.
     QCOMPARE(f.gate.restore(QStringLiteral("<contact:1>")),
-             QStringLiteral("+41 79 123 45 67"));
+             QStringLiteral("Bahnhofstrasse 1, Zürich"));
 }
 
 void TestToolRoundtrip::criticalToolRoundtripsAfterConsent()

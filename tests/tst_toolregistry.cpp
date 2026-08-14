@@ -110,36 +110,58 @@ void TestToolRegistry::refusesDisabledTool()
 void TestToolRegistry::refusesPersonalToolWithoutConsent()
 {
     Fixture f;
-    f.registry.setToolEnabled(QStringLiteral("find_contact"), true);
+    f.registry.setToolEnabled(QStringLiteral("get_upcoming_events"), true);
 
     const QVariantMap out =
-        f.registry.invoke(QStringLiteral("find_contact"),
-                          QVariantMap{{"query", "Anna"}});
+        f.registry.invoke(QStringLiteral("get_upcoming_events"),
+                          QVariantMap{{"days", 3}});
 
     QCOMPARE(out.value(QStringLiteral("error")).toString(),
              QStringLiteral("consent_required"));
     // Ohne Freigabe darf der Handler nicht einmal gelaufen sein.
-    QVERIFY(f.provider.lastQuery.isEmpty());
+    QCOMPARE(f.provider.lastDays, -1);
 }
 
 void TestToolRegistry::redactsPersonalResultAfterConsent()
 {
     Fixture f;
+    f.registry.setToolEnabled(QStringLiteral("get_upcoming_events"), true);
+    f.registry.grantConsent(QStringLiteral("get_upcoming_events"));
+
+    const QVariantMap out =
+        f.registry.invoke(QStringLiteral("get_upcoming_events"),
+                          QVariantMap{{"days", 3}});
+
+    QCOMPARE(f.provider.lastDays, 3);
+    QVERIFY(!out.contains(QStringLiteral("error")));
+    QCOMPARE(out.value(QStringLiteral("title")).toString(),
+             QStringLiteral("Team Meeting"));
+    // Die Adresse geht als Platzhalter raus und wird erst in der Antwort
+    // wieder eingesetzt.
+    QVERIFY(out.value(QStringLiteral("address")).toString()
+                .startsWith(QStringLiteral("<contact:")));
+}
+
+void TestToolRegistry::unavailableToolCannotBeEnabled()
+{
+    // find_contact ist auf SFOS ab 5.2 kaputt (Sailjail-Mount fuer den
+    // privilegierten Kontakte-Store scheitert) und deshalb als available =
+    // false registriert, bis der Fix in 0.9.2 landet.
+    Fixture f;
+    QVariantMap byName;
+    for (const QVariant &v : f.registry.tools())
+        byName.insert(v.toMap().value(QStringLiteral("name")).toString(), v);
+    QVERIFY(!byName.value(QStringLiteral("find_contact")).toMap()
+                 .value(QStringLiteral("available")).toBool());
+
     f.registry.setToolEnabled(QStringLiteral("find_contact"), true);
-    f.registry.grantConsent(QStringLiteral("find_contact"));
 
     const QVariantMap out =
         f.registry.invoke(QStringLiteral("find_contact"),
                           QVariantMap{{"query", "Anna"}});
-
-    QCOMPARE(f.provider.lastQuery, QStringLiteral("Anna"));
-    QVERIFY(!out.contains(QStringLiteral("error")));
-    QCOMPARE(out.value(QStringLiteral("name")).toString(),
-             QStringLiteral("Anna Muster"));
-    // Die Nummer geht als Platzhalter raus und wird erst in der Antwort
-    // wieder eingesetzt.
-    QVERIFY(out.value(QStringLiteral("phone")).toString()
-                .startsWith(QStringLiteral("<contact:")));
+    QCOMPARE(out.value(QStringLiteral("error")).toString(),
+             QStringLiteral("tool_disabled"));
+    QVERIFY(f.provider.lastQuery.isEmpty());
 }
 
 void TestToolRegistry::leavesLowResultUntouched()
@@ -159,15 +181,15 @@ void TestToolRegistry::leavesLowResultUntouched()
 void TestToolRegistry::disablingRevokesConsent()
 {
     Fixture f;
-    f.registry.setToolEnabled(QStringLiteral("find_contact"), true);
-    f.registry.grantConsent(QStringLiteral("find_contact"));
+    f.registry.setToolEnabled(QStringLiteral("get_upcoming_events"), true);
+    f.registry.grantConsent(QStringLiteral("get_upcoming_events"));
 
-    f.registry.setToolEnabled(QStringLiteral("find_contact"), false);
-    f.registry.setToolEnabled(QStringLiteral("find_contact"), true);
+    f.registry.setToolEnabled(QStringLiteral("get_upcoming_events"), false);
+    f.registry.setToolEnabled(QStringLiteral("get_upcoming_events"), true);
 
     // Wieder eingeschaltet heisst nicht wieder freigegeben.
-    QCOMPARE(f.registry.invoke(QStringLiteral("find_contact"),
-                               QVariantMap{{"query", "Anna"}})
+    QCOMPARE(f.registry.invoke(QStringLiteral("get_upcoming_events"),
+                               QVariantMap{{"days", 3}})
                  .value(QStringLiteral("error")).toString(),
              QStringLiteral("consent_required"));
 }

@@ -1,6 +1,6 @@
 Name:       harbour-nemoai
 Summary:    AI Companion for Sailfish OS
-Version:    0.9.1
+Version:    0.9.2
 Release:    1
 License:    MIT
 URL:        https://github.com/silly82/sailfish-ai-companion

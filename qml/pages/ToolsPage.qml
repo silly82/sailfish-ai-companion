@@ -43,6 +43,7 @@ Page {
             description: modelData.description
             checked: modelData.enabled
             automaticCheck: false
+            enabled: modelData.available
             onClicked: Tools.setToolEnabled(modelData.name, !modelData.enabled)
 
             Label {

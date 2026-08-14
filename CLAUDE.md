@@ -505,4 +505,87 @@ Version 0.9.0 (Minor — `find_contact` von Stub zu echtem Feature), danach
 0.9.1 (Patch — Fix für Bug 2, der `find_contact` in 0.9.0 unbenutzbar
 machte).
 
+**Bug 3 — `find_contact` findet auf SFOS 5.2 („Finlayson") trotz Fix aus
+Bug 2 weiterhin nichts, auf echtem Gerät entdeckt (Jolla Phone 2026, IP
+per SSH statt Emulator).** Zwei reale Testkontakte („Ping Pong", „Tip
+Tip"), per Screenshot aus der nativen People-App bestätigt vorhanden.
+`rpm -Uvh --force` über `devel-su` (nicht `sudo` — auf diesem Gerät nicht
+installiert; Passwort per `sshpass`/`-tt`-Pty an `devel-su` durchgereicht)
+brachte beide Pakete sauber auf 0.9.1, Einstellungen (Bug 1, Modellwahl,
+Tool-Freischaltung) überlebten das Upgrade unverändert — insofern
+funktioniert 0.9.1 wie erwartet. Der `find_contact`-Fix selbst aber nicht:
+
+Diagnose wieder per cross-kompiliertem Wegwerf-Binary (identischer
+`QContactFetchRequest`-Code wie `findContact`), diesmal aber *unsandboxed*
+per SSH ausgeführt statt über `invoker`/Sailjail. Ergebnis: 0 Kontakte,
+kein Fehler (`NoError`, `FinishedState`) — derselbe Befund wie ein
+direkter `sqlite3`-Read von
+`~/.local/share/system/Contacts/qtcontacts-sqlite/contacts.db`: die Datei
+existiert, enthält aber nur einen einzigen, komplett leeren Kontakt-Stub
+(keine `Names`/`DisplayLabels`-Zeilen). „Ping Pong"/„Tip Tip" kommen darin
+schlicht nicht vor — `grep -a` über die Datei findet die Strings nicht.
+
+Der eigentliche Fund lag im Launch-Log beider Apps
+(`invoker --type=silica-qt5 /usr/bin/<app>` mit Log-Capture):
+
+```
+Error: can't chdir to privileged
+constructing /run/firejail/mnt/privileged: Contacts ...   [harbour-nemoai]
+constructing /run/firejail/mnt/privileged: Images ...     [sailfishai]
+mounting /run/firejail/mnt/privileged @ .../system/privileged
+hiding /run/firejail/mnt/privileged
+```
+
+Zwei getrennte Befunde daraus:
+
+1. **`sailfishai` läuft auf SFOS 5.2 NICHT mehr unsandboxed**, obwohl
+   `sailfishai.desktop` bewusst keine `[X-Sailjail]`-Sektion hat (der
+   Kommentar dort fragte genau das: „Auf SFOS 5.x auf dem Zielgerät
+   verifizieren, ob das noch so greift" — Antwort: nein). Ohne deklarierte
+   Permissions bekommt die App ein Sailjail-Default-Profil mit nur
+   `Images`, nicht `Contacts` — Architekturentscheidung 3 („Full-Access =
+   unsandboxed") gilt auf diesem OS-Stand faktisch nicht mehr.
+2. **Der privilegierte Contacts-Mount selbst schlägt fehl**, auch für
+   `harbour-nemoai`, das `Contacts` korrekt deklariert. Die echten
+   Kontaktdaten liegen unter `.../system/privileged/Contacts/...`
+   (Owner `privileged:privileged`, Modus `0770` — weder `defaultuser` noch
+   eine plain-SSH-Session sind Mitglied dieser Gruppe). `/run/firejail/mnt/`
+   ist auf diesem Gerät komplett leer; der Mountpoint, den Sailjail für die
+   Bind-Mount-Konstruktion erwartet, existiert nicht. Root Cause dafür noch
+   offen (Geräte-/OS-Setup-Problem, kein reiner App-Bug) — mit Absicht
+   nicht tiefer verfolgt, siehe unten.
+
+Fix (statt weiterer Root-Cause-Jagd, User-Entscheidung): `find_contact`
+bekommt in `ToolRegistry::Tool` ein neues Feld `available` (default
+`true`). `registerTool()` erzwingt `enabled = false`, wenn `available ==
+false` — auch wenn eine alte `settings.ini` das Tool noch als
+eingeschaltet gespeichert hat. `setToolEnabled()` ignoriert
+Einschalt-Versuche für nicht verfügbare Tools. `ToolsPage.qml` bindet
+`enabled: modelData.available` auf den `TextSwitch` — Silica graut die
+Zeile automatisch aus, kein neuer Sonderfall in QML nötig. Die
+`find_contact`-Beschreibung (geht sowohl an die QML-Anzeige als auch als
+Tool-Schema-Text ans Modell) nennt den Grund direkt. Tests, die
+`find_contact` bisher als Stellvertreter für die generische
+Personal-Sensitivity-Consent-Kette benutzt haben
+(`refusesPersonalToolWithoutConsent`, `redactsPersonalResultAfterConsent`,
+`disablingRevokesConsent`, `deniedConsentReachesTheModel`,
+`grantedConsentRunsTheToolRedacted`), sind auf `get_upcoming_events`
+umgestellt (`FakeProvider::upcomingEvents()` liefert jetzt `title` +
+`address` statt eines leeren `QVariantMap`, `address` ist ein
+Redaktions-Trigger). Neuer Test `unavailableToolCannotBeEnabled` deckt das
+neue Verhalten direkt ab. `nix`/Nix-Shell war in dieser Umgebung nicht
+verfügbar — Testlauf stattdessen direkt gegen System-Qt
+(`qmake`/`g++`, Qt 5.15.13) über `scripts/run-tests.sh`, alle 34 Tests
+grün.
+
+Root Cause für den fehlenden `/run/firejail/mnt/privileged`-Mountpoint
+selbst ist noch offen — 0.9.2 grät `find_contact` nur aus, behebt den
+Mount noch nicht. Offen für einen späteren Fix, samt `sailfishai.desktop`
+eine `[X-Sailjail]`-Sektion zu geben (Full-Access braucht auf diesem
+OS-Stand explizite Permissions, sonst greift nur das minimale
+Default-Profil).
+
+Version 0.9.2 (Patch — `find_contact` bis zum Root-Cause-Fix ausgegraut,
+kein Feature-Zuwachs).
+
 Detailkonzept: `docs/konzept-v2.md`

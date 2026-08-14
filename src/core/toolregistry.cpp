@@ -50,8 +50,10 @@ void ToolRegistry::grantConsent(const QString &name)
 void ToolRegistry::registerTool(Tool t)
 {
     // Der uebergebene Wert ist die Voreinstellung; die Entscheidung des
-    // Nutzers ueberschreibt sie. Nie umgekehrt.
-    t.enabled = QSettings(appSettingsPath(), QSettings::IniFormat)
+    // Nutzers ueberschreibt sie. Nie umgekehrt. Ausnahme: ein als kaputt
+    // markiertes Tool bleibt aus, auch wenn eine alte settings.ini es noch
+    // als eingeschaltet gespeichert hat.
+    t.enabled = t.available && QSettings(appSettingsPath(), QSettings::IniFormat)
                     .value(settingsKey(t.name), t.enabled).toBool();
     m_tools.append(t);
 }
@@ -109,7 +111,11 @@ void ToolRegistry::buildManifest()
     if (m_caps->contacts()) {
         registerTool({"find_contact",
                       "Sucht einen Kontakt nach Name und liefert die hinterlegten "
-                      "Nummern und Adressen.",
+                      "Nummern und Adressen. Vorübergehend deaktiviert: auf "
+                      "Sailfish OS ab 5.2 scheitert der Sailjail-Mount für den "
+                      "privilegierten Kontakte-Store (\"can't chdir to "
+                      "privileged\"), wodurch beide Targets nur eine leere "
+                      "Kontaktliste sehen. Fix folgt in 0.9.2.",
                       QJsonObject{
                           {"type", "object"},
                           {"properties", QJsonObject{
@@ -125,6 +131,7 @@ void ToolRegistry::buildManifest()
                           return m_provider->findContact(
                               args.value(QStringLiteral("query")).toString());
                       },
+                      false,
                       false});
     }
 
@@ -279,6 +286,7 @@ QVariantList ToolRegistry::tools() const
             {"description",  t.description},
             {"sensitivity",  static_cast<int>(t.sensitivity)},
             {"enabled",      t.enabled},
+            {"available",    t.available},
             {"needsConsent", m_gate->requiresConfirmation(t.sensitivity)}
         });
     }
@@ -289,6 +297,7 @@ void ToolRegistry::setToolEnabled(const QString &name, bool enabled)
 {
     const int i = indexOf(name);
     if (i < 0 || m_tools.at(i).enabled == enabled) return;
+    if (!m_tools.at(i).available) return;
 
     m_tools[i].enabled = enabled;
     QSettings(appSettingsPath(), QSettings::IniFormat).setValue(settingsKey(name), enabled);

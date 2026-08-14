@@ -39,7 +39,13 @@ public:
     }
 
     QVariantMap recentMessages(int) override { return QVariantMap{}; }
-    QVariantMap upcomingEvents(int) override { return QVariantMap{}; }
+
+    QVariantMap upcomingEvents(int days) override
+    {
+        lastDays = days;
+        return QVariantMap{{"title", "Team Meeting"},
+                           {"address", "Bahnhofstrasse 1, Zürich"}};
+    }
 
     QVariantMap runCommand(const QString &command, const QStringList &args) override
     {
@@ -51,6 +57,7 @@ public:
     QString lastQuery;
     QString lastCommand;
     QStringList lastArgs;
+    int lastDays = -1;
 };
 
 /*!

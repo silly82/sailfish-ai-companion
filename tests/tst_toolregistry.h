@@ -16,6 +16,7 @@ private slots:
     void refusesDisabledTool();
     void refusesPersonalToolWithoutConsent();
     void redactsPersonalResultAfterConsent();
+    void unavailableToolCannotBeEnabled();
     void leavesLowResultUntouched();
     void disablingRevokesConsent();
     void togglePersistsAcrossInstances();

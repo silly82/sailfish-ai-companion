@@ -38,6 +38,10 @@ public:
         Sensitivity                             sensitivity;
         std::function<QVariantMap(QVariantMap)> handler;
         bool                                    enabled = false;
+        //! false = kann vom Nutzer nicht (mehr) eingeschaltet werden, UI graut
+        //! den Umschalter aus. Fuer Tools, die aktuell bekanntermassen kaputt
+        //! sind, statt sie ganz zu entfernen.
+        bool                                    available = true;
     };
 
     explicit ToolRegistry(Capabilities *caps,
