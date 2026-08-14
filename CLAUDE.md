@@ -109,6 +109,13 @@ je einmal pro Plattform (`aarch64`, `i486`):
 - `sailfishai-X.Y.Z-1.aarch64.rpm`
 - `sailfishai-X.Y.Z-1.i486.rpm`
 
+Tag + GitHub-Release (`gh release create vX.Y.Z --draft ...`) entstehen
+automatisch als Teil des Versionsbump-Commits — ohne dass extra danach
+gefragt werden muss. Diese Umgebung hat kein Sailfish-SDK, kann also keine
+RPMs bauen; der Release bleibt deshalb als **Draft** stehen, bis die vier
+RPMs lokal über `sfdk` gebaut, hochgeladen und der Draft veröffentlicht
+wurde.
+
 ## Nächster Schritt
 
 `get_battery_status`/`get_network_status` waren in beiden Providern
