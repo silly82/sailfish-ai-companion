@@ -4,8 +4,11 @@ Draft copy for the Harbour submission form. Screenshots are in
 `store/screenshots/` — `01`–`04` are emulator captures at the SDK's default
 336×798 resolution (below the Store's stated 1080px-wide minimum), kept only
 as reference. `de-01`–`de-04` are real-device captures (Jolla Phone 2026,
-1032×2272, aarch64, Sailfish OS 5.2.0.16) taken 2026-08-14 — use these for
-submission. Device system language was German at capture time, so the app
+aarch64, Sailfish OS 5.2.0.16) taken 2026-08-14 — use these for submission.
+Native capture size was 1032×2272, just under the form's stated 1080×1920
+minimum on the width; upscaled to 1080×2378 (Lanczos, aspect-ratio
+preserved, no crop) to clear the check. Device system language was German
+at capture time, so the app
 UI is German throughout; per-decision, submit the form with **both** an
 English and a German language variant of the Details section (below) rather
 than re-capturing in English. Upload order/pick for the 3-screenshot slot:
