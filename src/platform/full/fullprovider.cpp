@@ -12,7 +12,7 @@
 #include <CommHistory/GroupModel>
 
 #include <QContactManager>
-#include <QContactDetailFilter>
+#include <QContactFetchRequest>
 #include <QContactDisplayLabel>
 #include <QContactPhoneNumber>
 #include <QContactAddress>
@@ -151,15 +151,28 @@ QVariantMap FullProvider::findContact(const QString &query)
     // org.nemomobile.contacts.sqlite: dasselbe Backend, das Sailfish.Contacts
     // (QML) intern nutzt. Ergebnis wird von ToolRegistry::invoke() als
     // ConsentGate::Personal redigiert, bevor es an ein Cloud-Modell geht.
+    //
+    // Zwei Bugs gegen dieses Backend auf echtem Geraet reproduziert, beide
+    // in derselben Zeile behoben:
+    // 1. QContactDetailFilter auf QContactDisplayLabel liefert serverseitig
+    //    nie Treffer (DisplayLabel ist berechnet, keine indizierte Spalte).
+    // 2. Die synchrone Convenience-Methode manager.contacts() liefert bei
+    //    diesem Backend grundsaetzlich leer mit UnspecifiedError zurueck --
+    //    auch OHNE Filter, selbst wenn Kontakte existieren. Nur die
+    //    asynchrone QContactFetchRequest (mit waitForFinished() blockierend
+    //    genutzt) findet sie zuverlaessig.
     QContactManager manager(QStringLiteral("org.nemomobile.contacts.sqlite"));
 
-    QContactDetailFilter filter;
-    filter.setDetailType(QContactDisplayLabel::Type, QContactDisplayLabel::FieldLabel);
-    filter.setMatchFlags(QContactFilter::MatchContains);
-    filter.setValue(query);
+    QContactFetchRequest fetch;
+    fetch.setManager(&manager);
+    fetch.start();
+    fetch.waitForFinished();
 
     QVariantList out;
-    for (const QContact &contact : manager.contacts(filter)) {
+    for (const QContact &contact : fetch.contacts()) {
+        if (!contact.detail<QContactDisplayLabel>().label().contains(query, Qt::CaseInsensitive))
+            continue;
+
         QStringList numbers;
         for (const QContactPhoneNumber &phone : contact.details<QContactPhoneNumber>())
             numbers.append(phone.number());
