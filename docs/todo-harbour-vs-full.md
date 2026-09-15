@@ -74,9 +74,10 @@ Validatorlauf. Vor dem nächsten Store-Upload gegen einen Tag-Build nachziehen.
       installiert, gestartet, zeigt jetzt beim ersten Start den erwarteten
       Sailjail-Berechtigungsdialog (Calendar, Communication history,
       Contacts, Internet, Secrets), `pgrep -a firejail` listet die
-      passenden `--profile=...permission`-Einträge (s. F3). Auf echter
-      Hardware noch nicht verifiziert — hier ohne Gerätezugriff nicht
-      möglich. Ohne die Sektion
+      passenden `--profile=...permission`-Einträge (s. F3). Zusätzlich auf
+      echter Hardware bestätigt (Jolla Phone 2026, SFOS 5.2.0.17): gleicher
+      `pgrep -a firejail`-Befund, Berechtigungsdialog erschien beim ersten
+      Start. Ohne die Sektion
       bekommt die App das **Default-Profil**
       (`config/50-default-profile.conf`:
       `Audio;Bluetooth;Camera;Compatibility;Internet;Location;MediaIndexing;Microphone;NFC;RemovableMedia;UserDirs;WebView`)
@@ -114,9 +115,12 @@ Validatorlauf. Vor dem nächsten Store-Upload gegen einen Tag-Build nachziehen.
 
       Beides zusammen bestätigt die F3-Hypothese: der fehlende
       `Calendar`-Permission-Mount, nicht ein „Lock-Konflikt“, war die
-      tatsächliche Ursache für `query_failed`. Keine weitere Änderung an
-      `FullProvider::upcomingEvents()` nötig. Auf echter Hardware noch nicht
-      wiederholt.
+      tatsächliche Ursache für `query_failed`. Auf echter Hardware (Jolla
+      Phone 2026, SFOS 5.2.0.17) lief `get_upcoming_events` ebenfalls ohne
+      `query_failed` — dort allerdings mit echten Kalenderdaten, was zwei
+      eigene Bugs freigelegt hat (siehe „Nachtrag“ unten): eine
+      Redaktions-Falscherkennung auf ISO-Datumsstrings und eine fehlende
+      Rekurrenz-Expansion für wiederkehrende Termine. Beide behoben.
 - [ ] **F4** `X-Nemo-Application-Type=silica-qt5`, `OrganizationName`,
       `ApplicationName` in beiden Desktop-Dateien müssen zu
       `QStandardPaths`/`QSettings`-Pfaden passen — beim Nachziehen von F1
