@@ -2,7 +2,7 @@
 
 *[Schweizer Hochdeutsch weiter unten](#datenschutzerklärung)*
 
-Last updated: 2026-08-14.
+Last updated: 2026-09-15.
 
 AI Companion (`harbour-nemoai` / `sailfishai`) is a Sailfish OS chat client
 for OpenRouter's cloud models. This policy covers both build targets.
@@ -24,6 +24,11 @@ for OpenRouter's cloud models. This policy covers both build targets.
   provider and model can process your request. See
   [OpenRouter's privacy policy](https://openrouter.ai/privacy) for how they
   handle that data.
+- **Photos you attach** are sent the same way — picking an image from your
+  gallery and sending it embeds the full image in that request to
+  OpenRouter and the selected model. Nothing about the attachment is
+  redacted or altered; treat sending a photo the same as sending its exact
+  content to whichever model you've chosen.
 - **Tool calls above "system info" sensitivity** (e.g. reading a contact)
   require your explicit confirmation each time, shown before anything is
   sent. Personal data such as phone numbers and addresses is replaced with
@@ -50,7 +55,7 @@ Source: https://github.com/silly82/sailfish-ai-companion
 
 ## Datenschutzerklärung
 
-Letzte Aktualisierung: 14.08.2026.
+Letzte Aktualisierung: 15.09.2026.
 
 AI Companion (`harbour-nemoai` / `sailfishai`) ist ein Sailfish-OS-Chat-Client
 für OpenRouters Cloud-Modelle. Diese Erklärung gilt für beide Build-Targets.
@@ -73,6 +78,11 @@ für OpenRouters Cloud-Modelle. Diese Erklärung gilt für beide Build-Targets.
   Anbieter und Modell deine Anfrage verarbeiten können. Siehe
   [OpenRouters Datenschutzerklärung](https://openrouter.ai/privacy) dazu,
   wie diese Daten dort behandelt werden.
+- **Angehängte Fotos** gehen denselben Weg — ein aus der Galerie gewähltes
+  und gesendetes Bild wird vollständig in diese Anfrage an OpenRouter und
+  das gewählte Modell eingebettet. Am Anhang wird nichts geschwärzt oder
+  verändert; das Senden eines Fotos ist gleichzusetzen mit dem Senden
+  seines exakten Inhalts an das jeweils gewählte Modell.
 - **Tool-Aufrufe ab Sensitivität «Persönlich»** (z. B. Kontakt lesen)
   brauchen jedes Mal deine ausdrückliche Bestätigung, bevor überhaupt
   etwas gesendet wird. Personenbezogene Daten wie Telefonnummern und
