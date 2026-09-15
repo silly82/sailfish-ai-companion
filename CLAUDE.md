@@ -628,4 +628,57 @@ beide Targets, kein Eingriff in `.pro`/`.prf` nötig.
 
 Version 0.9.3 (Patch — Übersetzungs-Katalog-Fix für `sailfishai`).
 
+0.9.4/0.9.5: H1–H5 und F1 aus `docs/todo-harbour-vs-full.md` umgesetzt
+(QtContacts aus dem Harbour-Build entfernt, `[X-Sailjail]` für `sailfishai`
+ergänzt), auf echter Hardware (Jolla Phone 2026, SFOS 5.2.0.17) zwei
+Bugs gefunden und in 0.9.5 gefixt: `ConsentGate::redactText()` erkannte
+ISO-Datumsstrings fälschlich als Telefonnummer (`isoDatePattern()`-
+Ausschluss ergänzt), und `FullProvider::upcomingEvents()` gab bei
+wiederkehrenden Terminen (mkcal's Geburtstage-aus-Kontakten-Notebook) das
+rohe, jahrzehntealte `DTSTART` zurück statt des tatsächlichen Vorkommens im
+angefragten Zeitfenster (jetzt über `Recurrence::getNextDateTime()`
+korrekt expandiert).
+
+**H7 (Contacts/Calendar-Mount) geklärt — kein App-Bug, sondern ein
+Booster-Cache-Fallstrick beim Testen auf echtem Gerät:** Nach einem
+`[X-Sailjail]`-Permissions-Update reicht ein reines `devel-su rpm -Uvh
+--force` **nicht** aus, damit `privileged-data`-Mounts (z. B.
+`${PRIVILEGED}/Contacts`, `${PRIVILEGED}/Calendar`) im Sandbox der App
+erscheinen — obwohl `pgrep -a firejail` bereits die korrekten
+`--profile=.../Contacts.permission`-Einträge zeigt. Ursache: Apps vom Typ
+`silica-qt5` laufen über `invoker --type=silica-qt5`, das an den
+langlebigen `booster-silica-qt5`-Daemon (`systemctl --user`, Autostart)
+übergibt; dessen Sandbox-Mount-Namespace stammt vom Zeitpunkt seines
+letzten Starts, nicht von der zuletzt installierten App-Version. Diagnose
+per `sailjail -d -p <app>.desktop -- /usr/bin/<app>` (Debug-Verbosity,
+zeigt bei Erfolg `constructing /run/firejail/mnt/privileged: ... /
+mounted at: ...`) — ein direkter `sailjail`-Aufruf ohne `invoker` umgeht
+den Booster und baut jedes Mal einen frischen Sandbox auf, was den
+Vergleich mit dem `invoker`-Pfad erst zeigt. Fix zum Testen:
+`systemctl --user restart booster-silica-qt5.service` nach jeder
+Installation, die `[X-Sailjail]`-Permissions ändert; alternativ Geräte-
+Neustart. Details: `docs/todo-harbour-vs-full.md`, Abschnitt „Falsche
+Schlüsse“ Punkt 5.
+
+**Werkzeug für Textfelder auf echtem Gerät ohne sichtbaren Screen:**
+`invoker`/Silica-Dialoge lassen sich wie im Emulator per SSH bedienen,
+aber `VBoxManage keyboardputstring` gibt es auf echter Hardware nicht.
+Ersatz: ein winziges Python-Skript, das per `fcntl.ioctl` auf
+`/dev/uinput` (root/`devel-su` nötig, Device gehört einer Systemgruppe)
+eine virtuelle USB-Tastatur erzeugt (`UI_DEV_SETUP`/`UI_DEV_CREATE`,
+`struct uinput_setup` `<4H80sI`) und dann `EV_KEY`-Press/Release-Paare
+sendet — funktioniert systemweit unabhängig von der Sailjail-Sandbox des
+fokussierten Feldes. Vorsicht beim Zeichen-Mapping: evdev-Keycodes sind
+physische Positionen, keine Zeichen — welches Zeichen dabei herauskommt,
+hängt vom aktiven Tastatur-Layout ab. `/usr/share/qt5/keymaps/droid.qmap`
+(von Lipstick als `evdevkeyboard`-Plugin-Argument übergeben) ist dabei
+NICHT die massgebliche Zuordnung für Text in Silica-Feldern — echte
+Texteingabe läuft über Maliit/eine XKB-basierte Layoutzuordnung, die dem
+Systemlayout (hier Deutsch/QWERTZ) folgt: Y/Z vertauscht gegenüber US, und
+`-` liegt nicht auf der US-Minus-Taste (die ist `ß`) und auch nicht auf
+dem Nummernblock (dieses Phone-Keymap hat keinen sauberen Nummernblock),
+sondern auf der Position der US-`/`-Taste. Kalibrieren lohnt sich vor
+sicherheitsrelevantem Text (API-Keys!) über eine kurze Testzeichenkette
+mit sichtbarem Feld, statt das Layout zu raten.
+
 Detailkonzept: `docs/konzept-v2.md`

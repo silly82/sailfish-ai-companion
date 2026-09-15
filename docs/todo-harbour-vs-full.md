@@ -59,9 +59,18 @@ Validatorlauf. Vor dem nächsten Store-Upload gegen einen Tag-Build nachziehen.
 - [x] **H5** Secrets-Requires ergänzt:
       `Requires: sailfishsecretsdaemon-cryptoplugins-default`,
       `Requires: sailfishsecretsdaemon-secretsplugins-default`.
-- [ ] **H7** Contacts-Laufzeitproblem neu diagnostizieren, siehe
-      „Falsche Schlüsse“ unten — die 0.9.2-Begründung ist widerlegt. Braucht
-      einen `sailjail --trace`-Lauf auf echter Hardware, hier nicht möglich.
+- [x] **H7 (Root Cause gefunden)** `sailjail --trace`/`-d` auf echter
+      Hardware (Jolla Phone 2026, SFOS 5.2.0.17) durchgeführt, siehe
+      „Falsche Schlüsse“ Punkt 5 unten. Ursache: der `booster-silica-qt5`-
+      Daemon cacht seinen Sandbox-Mount-Namespace vom Zeitpunkt seines
+      letzten Starts — ein reines RPM-Upgrade, das `[X-Sailjail]`-
+      Permissions ändert, reicht nicht, der Booster muss dafür neu
+      gestartet werden (`systemctl --user restart
+      booster-silica-qt5.service`), sonst bleiben `privileged-data`-Mounts
+      leer, obwohl `pgrep -a firejail` bereits die korrekten
+      `--profile=...`-Einträge zeigt. Kein App-Bug, kein Sailjail-Bug —
+      ein Deployment-/Testworkflow-Fallstrick, jetzt in `CLAUDE.md`
+      dokumentiert.
 - [ ] **H8** Backlog erlaubte, ungenutzte Schnittstellen (Abschnitt weiter
       unten) — jede einzeln entscheiden, nicht sammeln.
 
@@ -199,6 +208,22 @@ Damit diese Punkte nicht wieder als Harbour-Aufgabe auftauchen:
    Code-Kommentar und in `toolregistry.cpp` darf so nicht stehen bleiben —
    entweder durch den Trace ersetzen oder den Grund auf „Harbour-C++-API
    nicht erlaubt, QML-Umsetzung offen (H2)“ umschreiben.
+5. **Der echte Grund für den leeren `/run/firejail/mnt/privileged/` bei den
+   0.9.5-Erstversuchen war nicht Sailjail/Firejail selbst, sondern ein
+   veralteter Booster-Prozess.** `sailjail -d -p sailfishai.desktop --
+   /usr/bin/sailfishai` (direkt, ohne `invoker`) zeigte im Debug-Log
+   (`Mounting ... constructing /run/firejail/mnt/privileged: Contacts,
+   Calendar ...` gefolgt von zwei erfolgreichen `mounted at:`-Zeilen) einen
+   **funktionierenden** Mount-Aufbau — der normale Start über `invoker
+   --type=silica-qt5` (der über den langlebigen `booster-silica-qt5`-Daemon
+   läuft) zeigte für denselben Prozess dagegen keinen Mount. Der Booster war
+   in beiden Fällen bereits **vor** der Installation der `[X-Sailjail]`-
+   Permissions gestartet worden; sein Sandbox-Mount-Namespace stammt vom
+   Zeitpunkt seines eigenen Starts, nicht von der zuletzt installierten
+   App-Version. Nach `systemctl --user restart booster-silica-qt5.service`
+   zeigte derselbe `invoker`-Startpfad die Mounts korrekt. Für Tests nach
+   jeder Änderung an `[X-Sailjail]`-Permissions: Booster neu starten (oder
+   Gerät neu starten), ein reines `rpm -Uvh --force` genügt nicht.
 
 ## Doku-Korrekturen (Teil dieses To-dos)
 
@@ -377,11 +402,17 @@ Eigentlicher Fix (Entwurf, ohne Gerät nicht verifizierbar):
   im Emulator ist `/run/firejail/mnt/privileged/` hier komplett leer
   (`ls` bestätigt), obwohl die echten Daten unter
   `~/.local/share/system/privileged/{Contacts,Calendar}` vorhanden sind
-  (Owner `privileged:privileged`). Root Cause weiterhin offen — Geräte-/
-  OS-Setup-Problem, kein App-Bug, siehe die schon vorhandene H7-Notiz oben.
-  Trotzdem lief `get_upcoming_events` fehlerfrei (kein `query_failed`) — der
-  fehlende Mount blockiert den Zugriff auf diesem konkreten Gerät also nicht
-  vollständig, mkcal kommt offenbar über einen anderen Pfad an die Daten.
+  (Owner `privileged:privileged`). **Root Cause seither gefunden (H7,
+  Abschnitt „Falsche Schlüsse“ Punkt 5): ein veralteter
+  `booster-silica-qt5`-Prozess, der vor der Installation der
+  `[X-Sailjail]`-Permissions gestartet wurde und seinen alten Sandbox-Mount-
+  Namespace weiterverwendet hat — kein Geräte-/OS-Setup-Problem.** Nach
+  `systemctl --user restart booster-silica-qt5.service` war der Mount
+  vorhanden. Dass `get_upcoming_events` trotzdem fehlerfrei lief (kein
+  `query_failed`), obwohl der Mount zu diesem Zeitpunkt fehlte, deutet
+  darauf hin, dass `mKCal::SqliteStorage` hier nicht auf die gemountete
+  Datei angewiesen ist, sondern über einen D-Bus-Dienst auf die
+  Kalenderdaten zugreift — nicht weiter verifiziert.
 
 **Bug A — `get_upcoming_events` liefert mkcal's automatisches „Geburtstage
 aus Kontakten"-Notebook statt echter Termine (behoben).** Mit dem
