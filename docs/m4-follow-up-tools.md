@@ -96,6 +96,22 @@ geht verloren. Vor einem funktionalen Fix:
   aufgerufen werden sollte statt pro Aufruf neu.
 
 ### 2. `find_contact` implementieren [beide Targets]
+
+> **Korrektur (2026-09-15, nach Abgleich mit den Validator-Configs):** Die
+> Begründung weiter unten, QtContacts sei „die von `docs.sailfishos.org`
+> dokumentierte Harbour-konforme C++-API“, ist **falsch**.
+> `libQt5Contacts.so.5` steht nicht in `allowed_libraries.conf`; der
+> Harbour-Build bricht damit bei `sfdk check` ab („Cannot link to shared
+> library“). Harbour-legal sind nur die QML-Imports `Sailfish.Contacts 1.0`
+> bzw. `org.nemomobile.contacts 1.0` (+ `Requires: qml(Sailfish.Contacts)` /
+> `qml(org.nemomobile.contacts)`). `QT += contacts` gehört deshalb in den
+> `fullaccess`-Block, nicht in die gemeinsame Zeile.
+> Ausserdem ist die in 0.9.2 notierte Ursache („`Error: can't chdir to
+> privileged` = defekter Contacts-Mount“) nicht haltbar — die Zeile steht
+> beim Start jeder sandboxed App, und die „0 Kontakte“-Diagnose lief
+> unsandboxed und damit über einen anderen Zugriffspfad als die App.
+> Vollständige Herleitung und To-do-Liste pro Target:
+> [`todo-harbour-vs-full.md`](todo-harbour-vs-full.md).
 Betroffen: `ISystemProvider::findContact` (Interface bereits vorhanden),
 Stubs in `fullprovider.cpp:122-123` und `sandboxedprovider.cpp:121-128`
 (dort bereits mit TODO „M2: org.nemomobile.contacts 1.0, read-only" annotiert).

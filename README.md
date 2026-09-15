@@ -219,6 +219,17 @@ the target builds, so keep to Qt 5.6 APIs in `src/core/`.
       `query_failed`, `find_contact` still unimplemented, and `run_command`
       timing out on interactive programs like `top` — tracked with a fix
       plan in [`docs/m4-follow-up-tools.md`](docs/m4-follow-up-tools.md)
+- [ ] Interface audit follow-ups — itemised per target in
+      [`docs/todo-harbour-vs-full.md`](docs/todo-harbour-vs-full.md). An
+      audit against the real validator/permission configs found: the Harbour
+      target links **QtContacts, which is not an allowed Harbour library**
+      (`Cannot link to shared library`); `Contacts`/`Bluetooth` permissions
+      and the notifications require are declared without a matching code
+      path; and `sailfishai` runs in sailjail's **default profile** instead
+      of unsandboxed, because its desktop file has no `[X-Sailjail]`. The
+      same document lists the allowed-but-unused interfaces (KeepAlive, Web
+      Authorization, Pickers, Multimedia, Share, Accounts, Location) and
+      what is out of reach in Harbour by design
 - [ ] M5 Local inference
 - [ ] M6 Voice
 
@@ -456,6 +467,18 @@ Target-Build nicht, in `src/core/` also bei Qt-5.6-APIs bleiben.
       implementiert, und `run_command` läuft bei interaktiven Programmen wie
       `top` in einen Timeout — mit Fix-Plan festgehalten in
       [`docs/m4-follow-up-tools.md`](docs/m4-follow-up-tools.md)
+- [ ] Nacharbeiten Schnittstellen-Audit — pro Target aufgelistet in
+      [`docs/todo-harbour-vs-full.md`](docs/todo-harbour-vs-full.md). Ein
+      Abgleich gegen die echten Validator-/Permission-Configs ergab: das
+      Harbour-Target linkt **QtContacts, das keine erlaubte Harbour-Library
+      ist** (`Cannot link to shared library`); die Permissions `Contacts`/
+      `Bluetooth` und die Notifications-Require sind deklariert, aber ohne
+      passenden Codepfad; und `sailfishai` läuft im **Default-Profil** von
+      sailjail statt unsandboxed, weil die Desktop-Datei keine
+      `[X-Sailjail]`-Sektion hat. Dasselbe Dokument listet die erlaubten,
+      aber ungenutzten Schnittstellen (KeepAlive, Web Authorization,
+      Pickers, Multimedia, Share, Accounts, Location) und was in Harbour
+      prinzipbedingt nicht geht
 - [ ] M5 Lokale Inferenz
 - [ ] M6 Sprachein- und -ausgabe
 

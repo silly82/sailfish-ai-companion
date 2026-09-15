@@ -51,7 +51,12 @@ translations/harbour-nemoai-de.ts` laufen lassen, die neue
 
 Erlaubt und genutzt:
 - `Sailfish.Secrets 1.0` + Permission `Secrets` — API-Key-Ablage
-- `org.nemomobile.contacts 1.0` + Permission `Contacts` — read-only
+- `Sailfish.Contacts 1.0` / `org.nemomobile.contacts 1.0` + Permission `Contacts`
+  — **nur als QML-Import** erlaubt, read-only
+- **QtContacts (`libQt5Contacts.so.5`) ist in Harbour NICHT erlaubt**: steht
+  nicht in `allowed_libraries.conf`, `sfdk check` bricht mit „Cannot link to
+  shared library“ ab. Kein C++-Kontaktzugriff im Harbour-Target — Kontakte
+  laufen dort über QML
 - `org.kde.bluezqt 1.0` + Permission `Bluetooth`
 - Akku/Netz: `/sys/class/power_supply` + `QNetworkInterface` statt ContextKit
   — im SDK-Sysroot gibt es nur das QML-Modul `org.freedesktop.contextkit 1.0`,
@@ -65,6 +70,16 @@ Nicht erlaubt, gehört ins Full-Target:
 - Notifications LESEN (auch mit Vollzugriff fragil — eigenes Spike-Ticket)
 - SMS/Call-Log (`libcommhistory`), Kalender (`libmkcal`)
 - Prozess-Spawn, systemd-User-Units, freies Dateisystem
+
+Sailjail: `harbour-nemoai` deklariert seine Permissions in `[X-Sailjail]`.
+`sailfishai` hat bewusst keine solche Sektion — das heisst aber **nicht**
+„unsandboxed“. Ohne Sektion bekommt die App das Default-Profil aus
+`sailjail-permissions/config/50-default-profile.conf`
+(`Audio;Bluetooth;Camera;Compatibility;Internet;Location;MediaIndexing;Microphone;NFC;RemovableMedia;UserDirs;WebView`),
+also kein `Secrets`, `Contacts`, `Calendar` oder `CommunicationHistory`.
+Für die privilegierten Stores im Full-Target muss die Sektion mit den
+OpenRepos-Permissions explizit gesetzt werden. To-do-Liste pro Target:
+`docs/todo-harbour-vs-full.md`.
 
 Vor jedem Store-Upload: `sfdk check`. Die Wahrheit sind die Validator-Configs
 in `sailfishos/sdk-harbour-rpmvalidator`, nicht die Doku-Seite.
