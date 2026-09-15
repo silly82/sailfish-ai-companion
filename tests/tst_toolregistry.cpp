@@ -144,9 +144,10 @@ void TestToolRegistry::redactsPersonalResultAfterConsent()
 
 void TestToolRegistry::unavailableToolCannotBeEnabled()
 {
-    // find_contact ist auf SFOS ab 5.2 kaputt (Sailjail-Mount fuer den
-    // privilegierten Kontakte-Store scheitert) und deshalb als available =
-    // false registriert, bis der Fix in 0.9.2 landet.
+    // find_contact ist als available = false registriert, waehrend die
+    // eigentliche Ursache noch offen ist (H7, docs/todo-harbour-vs-full.md).
+    // Die Tests hier definieren SFAI_HARBOUR nicht (tests/tests.pro), pruefen
+    // also den Full-Zweig von Capabilities::contacts() (== true).
     Fixture f;
     QVariantMap byName;
     for (const QVariant &v : f.registry.tools())

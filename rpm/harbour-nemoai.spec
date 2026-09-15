@@ -8,7 +8,8 @@ Source0:    %{name}-%{version}.tar.bz2
 
 Requires:   sailfishsilica-qt5 >= 0.10.9
 Requires:   sailfishsecretsdaemon
-Requires:   nemo-qml-plugin-notifications-qt5
+Requires:   sailfishsecretsdaemon-cryptoplugins-default
+Requires:   sailfishsecretsdaemon-secretsplugins-default
 
 BuildRequires: pkgconfig(sailfishapp) >= 1.0.2
 BuildRequires: pkgconfig(Qt5Core)
@@ -17,7 +18,6 @@ BuildRequires: pkgconfig(Qt5Quick)
 BuildRequires: pkgconfig(Qt5Network)
 BuildRequires: pkgconfig(Qt5Sql)
 BuildRequires: pkgconfig(Qt5DBus)
-BuildRequires: pkgconfig(Qt5Contacts)
 BuildRequires: pkgconfig(sailfishsecrets)
 BuildRequires: desktop-file-utils
 

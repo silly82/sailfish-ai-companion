@@ -4,14 +4,6 @@
 #include <QFile>
 #include <QDir>
 
-#include <QContactManager>
-#include <QContactFetchRequest>
-#include <QContactDisplayLabel>
-#include <QContactPhoneNumber>
-#include <QContactAddress>
-
-QTCONTACTS_USE_NAMESPACE
-
 SandboxedProvider::SandboxedProvider(QObject *parent) : ISystemProvider(parent) {}
 
 QVariantMap SandboxedProvider::unsupported()
@@ -122,54 +114,10 @@ QVariantMap SandboxedProvider::storageStatus()
 
 QVariantMap SandboxedProvider::bluetoothDevices()
 {
-    // TODO M2: org.kde.bluezqt 1.0 anbinden (Permission Bluetooth im .desktop)
+    // Kein Tool nutzt das (H3, docs/todo-harbour-vs-full.md) -- die
+    // ungenutzte Bluetooth-Permission ist deshalb aus harbour-nemoai.desktop
+    // entfernt statt begruendet zu werden. Fuer eine spaetere Umsetzung waere
+    // org.kde.bluezqt 1.0 erlaubt (siehe H8-Backlog dort).
     return QVariantMap{{"error", "not_implemented"}};
 }
 
-QVariantMap SandboxedProvider::findContact(const QString &query)
-{
-    // org.nemomobile.contacts.sqlite: dasselbe Backend, das Sailfish.Contacts
-    // (QML) intern nutzt. Ergebnis wird von ToolRegistry::invoke() als
-    // ConsentGate::Personal redigiert, bevor es an ein Cloud-Modell geht.
-    //
-    // Zwei Bugs gegen dieses Backend auf echtem Geraet reproduziert, beide
-    // in derselben Zeile behoben:
-    // 1. QContactDetailFilter auf QContactDisplayLabel liefert serverseitig
-    //    nie Treffer (DisplayLabel ist berechnet, keine indizierte Spalte).
-    // 2. Die synchrone Convenience-Methode manager.contacts() liefert bei
-    //    diesem Backend grundsaetzlich leer mit UnspecifiedError zurueck --
-    //    auch OHNE Filter, selbst wenn Kontakte existieren. Nur die
-    //    asynchrone QContactFetchRequest (mit waitForFinished() blockierend
-    //    genutzt) findet sie zuverlaessig.
-    QContactManager manager(QStringLiteral("org.nemomobile.contacts.sqlite"));
-
-    QContactFetchRequest fetch;
-    fetch.setManager(&manager);
-    fetch.start();
-    fetch.waitForFinished();
-
-    QVariantList out;
-    for (const QContact &contact : fetch.contacts()) {
-        if (!contact.detail<QContactDisplayLabel>().label().contains(query, Qt::CaseInsensitive))
-            continue;
-
-        QStringList numbers;
-        for (const QContactPhoneNumber &phone : contact.details<QContactPhoneNumber>())
-            numbers.append(phone.number());
-
-        QStringList addresses;
-        for (const QContactAddress &address : contact.details<QContactAddress>()) {
-            QStringList parts{address.street(), address.locality()};
-            parts.removeAll(QString());
-            if (!parts.isEmpty())
-                addresses.append(parts.join(QStringLiteral(", ")));
-        }
-
-        out.append(QVariantMap{
-            {"name",      contact.detail<QContactDisplayLabel>().label()},
-            {"phones",    numbers},
-            {"addresses", addresses}
-        });
-    }
-    return QVariantMap{{"contacts", out}};
-}

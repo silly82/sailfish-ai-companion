@@ -37,35 +37,41 @@ Validatorlauf. Vor dem nächsten Store-Upload gegen einen Tag-Build nachziehen.
 
 ## To-dos — Target `harbour-nemoai` (Jolla Store)
 
-- [ ] **H1a** `QT += contacts` aus der gemeinsamen Zeile in den
+- [x] **H1a** `QT += contacts` aus der gemeinsamen Zeile in den
       `fullaccess`-Block verschieben; `BuildRequires: pkgconfig(Qt5Contacts)`
       aus `rpm/harbour-nemoai.spec` entfernen.
-- [ ] **H1b** `QContactManager`/`QContactFetchRequest`/`QContactDisplayLabel`/
+- [x] **H1b** `QContactManager`/`QContactFetchRequest`/`QContactDisplayLabel`/
       `QContactPhoneNumber`/`QContactAddress` aus
       `src/platform/sandboxed/sandboxedprovider.cpp` entfernen.
-- [ ] **H2** `find_contact` im Harbour-Target über QML neu aufsetzen
-      (`Sailfish.Contacts 1.0` oder `org.nemomobile.contacts 1.0`,
-      read-only). Bis die QML→`ToolRegistry`-Brücke steht:
-      `Capabilities::contacts()` im `SFAI_HARBOUR`-Zweig auf `false`, damit
-      das Tool gar nicht erst im Manifest steht (statt es wie in 0.9.2 nur
-      „unavailable“ auszugrauen).
-- [ ] **H3** `Bluetooth` aus `Permissions=` streichen **oder** das Tool
-      implementieren (`Sailfish.Bluetooth 1.0` bzw. `org.kde.bluezqt 1.0`
-      sind beide erlaubt) und die Permission begründen.
-- [ ] **H4** `Requires: nemo-qml-plugin-notifications-qt5` streichen **oder**
-      „Antwort fertig“-Notification mit `Nemo.Notifications 1.0` (erlaubt)
-      tatsächlich umsetzen.
-- [ ] **H5** Secrets-Requires ergänzen:
+- [x] **H2 (kurzfristig)** `Capabilities::contacts()` im `SFAI_HARBOUR`-Zweig
+      auf `false`, damit `find_contact` im Harbour-Manifest gar nicht mehr
+      auftaucht. Der eigentliche Fix (Kontakte im Harbour-Target über QML neu
+      aufsetzen, `Sailfish.Contacts 1.0`/`org.nemomobile.contacts 1.0` +
+      `ToolRegistry`-Brücke) bleibt offen — ohne SDK/Gerät hier nicht
+      verifizierbar, siehe Entwurf weiter unten unter „H2 — Kontakte im
+      Harbour-Target“.
+- [x] **H3** `Bluetooth` (und `Contacts`, da mit H2 kein Codepfad mehr) aus
+      `Permissions=` in `harbour-nemoai.desktop` gestrichen — kein Tool nutzt
+      es, siehe Kommentar in `sandboxedprovider.cpp`.
+- [x] **H4** `Requires: nemo-qml-plugin-notifications-qt5` aus
+      `rpm/harbour-nemoai.spec` gestrichen (kein Aufruf im Code). Die
+      Notification-Umsetzung bleibt H8-Backlog.
+- [x] **H5** Secrets-Requires ergänzt:
       `Requires: sailfishsecretsdaemon-cryptoplugins-default`,
       `Requires: sailfishsecretsdaemon-secretsplugins-default`.
 - [ ] **H7** Contacts-Laufzeitproblem neu diagnostizieren, siehe
-      „Falsche Schlüsse“ unten — die 0.9.2-Begründung ist widerlegt.
+      „Falsche Schlüsse“ unten — die 0.9.2-Begründung ist widerlegt. Braucht
+      einen `sailjail --trace`-Lauf auf echter Hardware, hier nicht möglich.
 - [ ] **H8** Backlog erlaubte, ungenutzte Schnittstellen (Abschnitt weiter
       unten) — jede einzeln entscheiden, nicht sammeln.
 
 ## To-dos — Target `sailfishai` (OpenRepos, Vollzugriff)
 
-- [ ] **F1** `[X-Sailjail]` in `sailfishai.desktop` ergänzen. Ohne die Sektion
+- [x] **F1** `[X-Sailjail]` in `sailfishai.desktop` ergänzt
+      (`Permissions=Internet;Secrets;Contacts;Calendar;CommunicationHistory;Privileged`,
+      `OrganizationName=ch.silly`/`ApplicationName=sailfishai` geprüft gegen
+      `src/main.cpp`). Auf echter Hardware (`pgrep -a firejail`) noch nicht
+      verifiziert — hier ohne Gerätezugriff nicht möglich. Ohne die Sektion
       bekommt die App das **Default-Profil**
       (`config/50-default-profile.conf`:
       `Audio;Bluetooth;Camera;Compatibility;Internet;Location;MediaIndexing;Microphone;NFC;RemovableMedia;UserDirs;WebView`)
@@ -168,16 +174,18 @@ Damit diese Punkte nicht wieder als Harbour-Aufgabe auftauchen:
 
 ## Doku-Korrekturen (Teil dieses To-dos)
 
-- [ ] `CLAUDE.md`, Abschnitt „Harbour-Regeln“: `org.nemomobile.contacts 1.0`
+- [x] `CLAUDE.md`, Abschnitt „Harbour-Regeln“: `org.nemomobile.contacts 1.0`
       als **QML**-Import kennzeichnen, QtContacts explizit als Harbour-fremd
-      aufführen; `Sailfish.KeepAlive 1.2`/`Nemo.KeepAlive`-Lib,
-      `Nemo.Notifications` und die erlaubten Permissions vollständig listen.
-- [ ] `CLAUDE.md`: festhalten, dass `sailfishai` **nicht** unsandboxed läuft,
-      solange `[X-Sailjail]` fehlt (Default-Profil) — Architekturentscheidung
-      3 („Full-Access = unsandboxed“) gilt so nicht mehr.
-- [ ] `docs/m4-follow-up-tools.md` §2: QtContacts-Begründung ersetzen und auf
-      H1/H2 verweisen.
-- [ ] `README.md` (Status, EN + DE): Verweis auf dieses Dokument.
+      aufführen — war bereits so dokumentiert, jetzt auch im Code umgesetzt
+      (H1/H2).
+- [x] `CLAUDE.md`: festhalten, dass `sailfishai` **nicht** unsandboxed läuft,
+      solange `[X-Sailjail]` fehlt — jetzt zusätzlich, dass die Sektion mit F1
+      ergänzt wurde.
+- [x] `docs/m4-follow-up-tools.md` §2: QtContacts-Begründung war bereits per
+      Korrektur-Vermerk ersetzt (Stand vor diesem Commit); Code jetzt
+      nachgezogen (H1/H2).
+- [x] `README.md` (Status, EN + DE): Verweis auf dieses Dokument war bereits
+      vorhanden.
 
 ## Verifikation
 

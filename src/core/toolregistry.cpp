@@ -108,14 +108,19 @@ void ToolRegistry::buildManifest()
                   true});
 
     // --- Personal: default aus, Bestätigung + Redaktion ---
+    // Registriert nur im Full-Target: Capabilities::contacts() ist im
+    // SFAI_HARBOUR-Zweig seit H2 (docs/todo-harbour-vs-full.md) fest false,
+    // weil QtContacts dort keine erlaubte Library ist.
     if (m_caps->contacts()) {
         registerTool({"find_contact",
                       "Sucht einen Kontakt nach Name und liefert die hinterlegten "
-                      "Nummern und Adressen. Vorübergehend deaktiviert: auf "
-                      "Sailfish OS ab 5.2 scheitert der Sailjail-Mount für den "
-                      "privilegierten Kontakte-Store (\"can't chdir to "
-                      "privileged\"), wodurch beide Targets nur eine leere "
-                      "Kontaktliste sehen. Fix folgt in 0.9.2.",
+                      "Nummern und Adressen. Vorübergehend deaktiviert: die "
+                      "frühere Diagnose (Sailjail-Mount für den privilegierten "
+                      "Kontakte-Store defekt) ist widerlegt — die zitierte "
+                      "Logzeile ist normales Sandbox-Rauschen, der Gegentest lief "
+                      "unsandboxed über einen anderen Zugriffspfad. Tatsächliche "
+                      "Ursache noch offen, siehe H7/F1-F3 in "
+                      "docs/todo-harbour-vs-full.md.",
                       QJsonObject{
                           {"type", "object"},
                           {"properties", QJsonObject{

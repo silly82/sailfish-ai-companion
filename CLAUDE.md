@@ -72,14 +72,19 @@ Nicht erlaubt, gehört ins Full-Target:
 - Prozess-Spawn, systemd-User-Units, freies Dateisystem
 
 Sailjail: `harbour-nemoai` deklariert seine Permissions in `[X-Sailjail]`.
-`sailfishai` hat bewusst keine solche Sektion — das heisst aber **nicht**
-„unsandboxed“. Ohne Sektion bekommt die App das Default-Profil aus
+`sailfishai` hatte lange bewusst keine solche Sektion — das sollte
+„unsandboxed” bedeuten, tut es aber **nicht**. Ohne Sektion bekommt die App
+nur das Default-Profil aus
 `sailjail-permissions/config/50-default-profile.conf`
 (`Audio;Bluetooth;Camera;Compatibility;Internet;Location;MediaIndexing;Microphone;NFC;RemovableMedia;UserDirs;WebView`),
-also kein `Secrets`, `Contacts`, `Calendar` oder `CommunicationHistory`.
-Für die privilegierten Stores im Full-Target muss die Sektion mit den
-OpenRepos-Permissions explizit gesetzt werden. To-do-Liste pro Target:
-`docs/todo-harbour-vs-full.md`.
+also kein `Secrets`, `Contacts`, `Calendar` oder `CommunicationHistory` — auf
+SFOS ab 5.2 real beobachtet (0.9.2-Befund). Seit F1
+(`docs/todo-harbour-vs-full.md`) hat `sailfishai.desktop` deshalb eine
+explizite `[X-Sailjail]`-Sektion mit
+`Permissions=Internet;Secrets;Contacts;Calendar;CommunicationHistory;Privileged`.
+Architekturentscheidung 3 („Full-Access = unsandboxed”) gilt also nur noch im
+Sinne von „alle benötigten Permissions freigeschaltet”, nicht mehr wörtlich
+als „keine Sandbox”. To-do-Liste pro Target: `docs/todo-harbour-vs-full.md`.
 
 Vor jedem Store-Upload: `sfdk check`. Die Wahrheit sind die Validator-Configs
 in `sailfishos/sdk-harbour-rpmvalidator`, nicht die Doku-Seite.

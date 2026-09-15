@@ -6,5 +6,15 @@ Exec=sailfishai
 Name=AI Companion (Full)
 Name[de]=AI Companion (Vollzugriff)
 
-# Bewusst KEINE [X-Sailjail]-Sektion: die App laeuft unsandboxed.
-# Auf SFOS 5.x auf dem Zielgeraet verifizieren, ob das noch so greift.
+# Ohne [X-Sailjail]-Sektion bekommt die App auf SFOS ab 5.2 nicht
+# "unsandboxed", sondern sailjails Default-Profil (config/50-default-profile.conf:
+# Audio;Bluetooth;Camera;Compatibility;Internet;Location;MediaIndexing;
+# Microphone;NFC;RemovableMedia;UserDirs;WebView) -- ohne Secrets, Contacts,
+# Calendar, CommunicationHistory. Deshalb explizit gesetzt (F1,
+# docs/todo-harbour-vs-full.md). OrganizationName/ApplicationName muessen zu
+# app->setOrganizationName()/setApplicationName() in src/main.cpp passen,
+# sonst verschieben sich QSettings-/ConversationStore-Pfade.
+[X-Sailjail]
+OrganizationName=ch.silly
+ApplicationName=sailfishai
+Permissions=Internet;Secrets;Contacts;Calendar;CommunicationHistory;Privileged

@@ -4,7 +4,11 @@ Capabilities::Capabilities(QObject *parent) : QObject(parent) {}
 
 #ifdef SFAI_HARBOUR
 bool Capabilities::sandboxed()      const { return true;  }
-bool Capabilities::contacts()       const { return true;  }  // Perm: Contacts
+// QtContacts (libQt5Contacts.so.5) steht nicht in allowed_libraries.conf --
+// Harbour-legal ist nur der QML-Import, den es fuer find_contact noch nicht
+// gibt (H2, docs/todo-harbour-vs-full.md). Manifest deshalb ehrlich: kein
+// Tool, statt es registriert und nur ausgegraut anzuzeigen.
+bool Capabilities::contacts()       const { return false; }
 bool Capabilities::telephony()      const { return true;  }  // Sailfish.Telephony (Umfang prüfen)
 bool Capabilities::messages()       const { return false; }
 bool Capabilities::calendar()       const { return false; }

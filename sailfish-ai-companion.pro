@@ -20,7 +20,7 @@ CONFIG(fullaccess) {
 }
 
 CONFIG += sailfishapp c++14
-QT     += network sql dbus contacts
+QT     += network sql dbus
 
 SOURCES += \
     src/main.cpp \
@@ -57,6 +57,7 @@ fullaccess {
     SOURCES += src/platform/full/fullprovider.cpp \
                src/core/keystore.cpp
     HEADERS += src/platform/full/fullprovider.h
+    QT += contacts
     PKGCONFIG += commhistory-qt5 libmkcal-qt5 KF5CalendarCore
 }
 
