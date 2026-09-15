@@ -26,35 +26,38 @@ not gated by the tool/consent system.
 
 ## Screenshots
 
-Existing captures (`store/screenshots/de-01` through `de-04`, real Jolla
-Phone 2026, 2026-08-14) still show the conversation list, pulley menu, and
-settings page, which haven't changed shape. They do **not** show the new
-attach button or the now-much-shorter Tools & Permissions list — consider
-recapturing at least a Tools & Permissions shot before submitting, since the
-old one (if it was ever used) would show tools that no longer exist in this
-build. Not recaptured in this pass — screenshotting the real device needs a
-manual tap on the Quick Settings screenshot tile, not something scriptable
-over SSH.
+Recaptured 2026-09-15 on the same real Jolla Phone 2026 (aarch64,
+harbour-nemoai 1.0.1), replacing the 2026-08-14 set — the tool list shrank
+from ~8 to 4 since those were taken, and there was no attach button yet.
+Device system language is still German (same as the 0.8.0 capture; despite
+a note in the previous draft speculating it had switched to English based
+on unrelated full-access-build testing earlier the same day — it hadn't,
+this was simply testing a different app). Native capture size 1032×2272,
+upscaled to 1080×2378 (Lanczos, aspect-ratio preserved, no crop) to clear
+the form's stated 1080×1920 minimum, same as before.
 
-`01`–`04` are emulator captures at the SDK's default 336×798 resolution
-(below the Store's stated 1080px-wide minimum), kept only as reference.
-`de-01`–`de-04` are real-device captures (Jolla Phone 2026, aarch64,
-Sailfish OS 5.2.0.16) taken 2026-08-14. Native capture size was 1032×2272,
-just under the form's stated 1080×1920 minimum on the width; upscaled to
-1080×2378 (Lanczos, aspect-ratio preserved, no crop) to clear the check.
-Device system language was German at capture time — current live testing
-(2026-09-15) shows the app running in English on the same device, so the
-system language has apparently changed since; a fresh capture would come
-out English, matching the primary English Details text directly instead of
-needing the bilingual-Details workaround below. Upload order/pick for the
-3-screenshot slot: `de-01-conversations.png`, `de-02-pulley-menu.png`,
-`de-03-settings.png`. `de-04-chat-active.png` (open chat, model +
-active-tools header, empty message list) is a spare.
+Five files, `store/screenshots/de-01` through `de-05`:
 
-Known cosmetic bug visible in `de-01-conversations.png`: the third
-conversation preview renders literal `**5 Stunden und 47 Minuten**` —
-the chat view doesn't parse Markdown bold out of the model's reply. Not
-fixed as part of this listing pass; flagged for a separate fix.
+- `de-01-conversations.png` — conversation list, real (cleaned-up) history
+- `de-02-pulley-menu.png` — pulley menu (Settings / Tools & Permissions / New conversation)
+- `de-03-settings.png` — Settings page (Backend saved, default model, Local-only toggle)
+- `de-04-tools-permissions.png` — **the important new one**: Tools & Permissions
+  showing the current, accurate 4-tool list (all "Systeminfo"/low sensitivity)
+- `de-05-chat-active.png` — open chat with tool-call badges (`get_datetime`,
+  `get_battery_status`) and the attach icon visible bottom-left
+
+Upload order/pick for a 3-screenshot slot: `de-01`, `de-04`, `de-05` (list,
+tools, active chat) cover the most ground; `de-02`/`de-03` are spares if a
+4th/5th slot is available.
+
+`01`–`04` (no `de-` prefix) are old emulator captures at the SDK's default
+336×798 resolution, well below the Store's minimum, kept only as
+historical reference — not for submission.
+
+Known cosmetic bug, still present in `de-05-chat-active.png`: a Markdown
+bold marker renders literally as `**85 %**` instead of being bolded — the
+chat view doesn't parse Markdown out of the model's reply. Not fixed as
+part of this listing pass; flagged for a separate fix.
 
 Category: **Utilities** (alternatively **Internet** — the app is a chat
 client, but its defining feature is the on-device tool/consent layer, which
