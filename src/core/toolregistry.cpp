@@ -178,12 +178,14 @@ void ToolRegistry::buildManifest()
     if (m_caps->automation()) {
         registerTool({"run_command",
                       "Führt ein Programm mit Argumenten auf dem Gerät aus und "
-                      "liefert Exit-Code sowie Ausgabe zurück. Es wird kein "
-                      "Terminal bereitgestellt — nur für nicht-interaktive "
-                      "Einzelaufrufe geeignet. Interaktive oder laufend "
-                      "aktualisierende Programme (z.B. `top` ohne `-n`) laufen "
-                      "nach 15s in einen Timeout statt eine Ausgabe zu liefern; "
-                      "ggf. eine nicht-interaktive Variante wählen (z.B. `top -n 1`).",
+                      "liefert Exit-Code sowie Ausgabe zurück. Bekanntermassen "
+                      "derzeit funktionslos: die Sailjail-Sandbox des Full-Access-"
+                      "Builds lässt ausser der App selbst kein einziges externes "
+                      "Programm zu (private-bin) — jeder Aufruf, auch trivialste "
+                      "wie `cat`, läuft in einen Timeout statt etwas auszuführen. "
+                      "Kein Retry mit anderen Optionen versuchen, das Ergebnis "
+                      "ist immer dasselbe. Siehe H8/run_command in "
+                      "docs/todo-harbour-vs-full.md.",
                       QJsonObject{
                           {"type", "object"},
                           {"properties", QJsonObject{

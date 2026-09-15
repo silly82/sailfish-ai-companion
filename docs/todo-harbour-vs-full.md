@@ -565,4 +565,50 @@ wichtig, die **richtige PID** zu erwischen (`pgrep -af
 '/usr/bin/<app>$'` zeigt sowohl den `invoker`-Prozess als auch das echte
 Binary; nur letzteres hat die relevanten Bind-Mounts).
 
+## Nachtrag: `run_command` funktioniert strukturell nicht mehr (2026-09-15)
+
+Live-Test auf echter Hardware: **jeder** `run_command`-Aufruf endet mit
+`{"timedOut":true}` — auch triviale, garantiert nicht-interaktive Befehle
+wie `cat /proc/loadavg` oder `uptime`. Die Zeitabstände zwischen
+Tool-Call und Ergebnis (~5-7s für mehrere Aufrufe) passen ausserdem nicht
+zu echten 15s-Timeouts, was auf ein sofortiges Fehlschlagen statt
+tatsächlichem Warten hindeutet.
+
+**Root Cause gefunden**: `ls -la /proc/<pid-des-echten-app-binaries>/root/usr/bin/`
+für den laufenden `sailfishai`-Prozess zeigt genau drei Dateien —
+`sailfishai` selbst, `thumbnaild-pdf`, `thumbnaild-video`. Kein `cat`,
+`sh`, `top`, `ps`, nichts sonst. Das ist `firejail --private-bin=sailfishai`
+(steht schon lange sichtbar in der generierten Kommandozeile, siehe F1/F3-
+Abschnitte oben) — Sailjail baut für jede App mit deklariertem
+`[X-Sailjail]` eine private `/usr/bin`, die **ausschliesslich die eigene
+Binary** enthält. `QProcess::start()` kann dadurch grundsätzlich **kein
+einziges externes Programm** starten, unabhängig von Consent oder
+Argumenten.
+
+**Vermutlich eine Nebenwirkung von F1**: Vor der expliziten
+`[X-Sailjail]`-Sektion lief `sailfishai` im sailjail-Default-Profil, das
+`private-bin` vermutlich nicht erzwingt — `run_command` könnte damals
+tatsächlich funktioniert haben (unklar, nie mit Logging verifiziert). F1
+hat Contacts/Calendar/Secrets repariert, dabei aber wahrscheinlich
+`run_command` strukturell kaputt gemacht: sauberes Sailjail-Sandboxing und
+beliebige Prozessausführung schliessen sich gegenseitig aus.
+
+**Entscheidung (Nutzer, 2026-09-15): vorerst nur dokumentieren, kein
+Code-Fix.** Zwei denkbare, aber grössere Auswege für später:
+1. Eigene, kuratierte Helfer-Binaries unter `%{_datadir}/sailfishai/`
+   ausliefern (whitelisteter App-Pfad, nicht `/usr/bin`) und darüber
+   referenzieren — ersetzt „beliebiges Programm" durch eine feste,
+   sichere Auswahl. Widerspricht bewusst der bisherigen
+   Architekturentscheidung „keine Allow-/Blocklist, ConsentGate reicht"
+   (Kommentar in `fullprovider.cpp`) — wäre eine echte Kursänderung.
+2. `[X-Sailjail]` für `sailfishai` wieder weglassen — verwirft aber F1
+   und macht Contacts/Calendar/Secrets erneut kaputt. Kein ernsthafter
+   Kompromiss.
+
+Die Tool-Beschreibung in `toolregistry.cpp` wurde angepasst, damit das
+Modell das nicht mehr wie im Live-Test beobachtet mehrfach mit
+unterschiedlichen Varianten durchprobiert (6 Versuche, alle
+`timedOut`), sondern die Situation sofort ehrlich mitteilt. Kein
+Verhaltens-Fix am `QProcess`-Aufruf selbst.
+
 

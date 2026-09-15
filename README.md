@@ -99,6 +99,13 @@ OS privileges.** There is no allowlist or sandboxing beyond the consent
 dialog and the default-off toggle — leave it disabled unless you
 specifically want an AI that can run commands on your phone.
 
+**Currently non-functional as of 1.0.0**: Sailjail's `--private-bin`
+restricts the sandbox's `/usr/bin` to the app binary itself, so
+`QProcess::start()` can't launch *any* external program — not a timeout
+on interactive commands as earlier assumed, confirmed on real hardware
+even for `cat`. Left in the tool manifest with an honest description
+rather than removed; see [`docs/todo-harbour-vs-full.md`](docs/todo-harbour-vs-full.md).
+
 The full-access package additionally requires `libcommhistory-qt5`,
 `mkcal-qt5`, and `kf5-calendarcore` at runtime. These normally ship with the
 native Messages and Calendar apps; if your device is missing any of them,
@@ -360,6 +367,14 @@ der App auszuführen.** Es gibt ausser dem Bestätigungsdialog und dem
 standardmässig ausgeschalteten Schalter keine Absicherung — lass es
 deaktiviert, wenn du keine KI willst, die Befehle auf deinem Handy ausführen
 kann.
+
+**Funktioniert seit 1.0.0 derzeit nicht**: Sailjails `--private-bin`
+beschränkt die `/usr/bin` der Sandbox auf die App-Binary selbst,
+`QProcess::start()` kann daher **kein** externes Programm starten — kein
+Timeout bei interaktiven Befehlen wie früher angenommen, auf echter
+Hardware bestätigt, sogar für `cat`. Bleibt mit ehrlicher Beschreibung im
+Tool-Manifest statt entfernt zu werden; siehe
+[`docs/todo-harbour-vs-full.md`](docs/todo-harbour-vs-full.md).
 
 Das Vollzugriffs-Paket braucht zur Laufzeit zusätzlich `libcommhistory-qt5`,
 `mkcal-qt5` und `kf5-calendarcore`. Die kommen normalerweise mit den
