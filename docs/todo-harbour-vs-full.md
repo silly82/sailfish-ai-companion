@@ -379,18 +379,33 @@ Eigentlicher Fix (Entwurf, ohne Gerät nicht verifizierbar):
   fehlende Mount blockiert den Zugriff auf diesem konkreten Gerät also nicht
   vollständig, mkcal kommt offenbar über einen anderen Pfad an die Daten.
 
-**Bug A — `get_upcoming_events` liefert vermutlich mkcal's automatisches
-„Geburtstage aus Kontakten"-Notebook statt echter Termine.** Ergebnis (siehe
-`tests`/echter Chat-Turn): ~160 Einträge, `summary` sind durchweg echte
-Kontaktnamen (z. B. „Marcel Arnold", „Judy Planzer") statt Termin-Titel,
-unabhängig vom `days`-Parameter (7 Tage angefragt, alle ~160 Kontakte
-zurückgekommen). Betrifft `FullProvider::upcomingEvents()`
-(`src/platform/full/fullprovider.cpp`) — vermutlich liest
-`calendar->events(start, end)` auch wiederkehrende ganztägige Einträge aus
-einer Birthday-Notebook, deren Wiederholungslogik die Datumsgrenze nicht wie
-erwartet respektiert. Noch nicht behoben — braucht eigene Diagnose (welche
-Notebooks `mKCal::ExtendedCalendar` lädt, ob sich die Birthday-Notebook
-gezielt ausschliessen lässt).
+**Bug A — `get_upcoming_events` liefert mkcal's automatisches „Geburtstage
+aus Kontakten"-Notebook statt echter Termine (behoben).** Mit dem
+Redaktions-Fix aus Bug B sichtbar gemacht: die Rohantwort enthielt ~190
+Einträge, `summary` durchweg echte Kontaktnamen (z. B. „Markus Furger",
+„Doris Schuler"), `start`/`end` auf das tatsächliche Geburtsjahr gepinnt
+(1604, 1973, 1975, 1979, 1983, 1984, 1985, 1992, ...) statt auf den
+diesjährigen Wiederholungstermin — unabhängig vom `days`-Parameter (7 Tage
+angefragt, alle ~190 Einträge zurückgekommen). Ursache:
+`calendar->events(start, end)` (`KCalendarCore::Calendar`) expandiert
+wiederkehrende Termine (die Birthday-Notebook nutzt eine jährliche RRULE
+mit dem echten Geburtsjahr als `DTSTART`) nicht auf ihr tatsächliches
+Vorkommen im angefragten Fenster — es kommt das rohe, ungeprüfte `DTSTART`
+zurück, das JEDES Mal im Ergebnis landet, ganz unabhängig davon, ob die
+diesjährige Wiederholung überhaupt in `[start, end]` fällt.
+
+Fix in `FullProvider::upcomingEvents()`
+(`src/platform/full/fullprovider.cpp`): pro Event zusätzlich `event->recurs()`
+prüfen und für wiederkehrende Termine über
+`event->recurrence()->getNextDateTime(rangeStart - 1s)` das nächste
+tatsächliche Vorkommen bestimmen; liegt das ausserhalb `[start, end]` oder
+ist ungültig (Wiederholung bereits beendet), wird der Eintrag verworfen.
+Nicht-wiederkehrende Termine werden zusätzlich defensiv gegen `[start, end]`
+geprüft. Verifiziert auf echter Hardware (Jolla Phone 2026, SFOS 5.2.0.17):
+derselbe `get_upcoming_events(days=7)`-Aufruf lieferte vorher ~190, danach
+genau 10 Einträge — alle echt im 17.–22.09.2026-Fenster, Geburtstage korrekt
+auf 2026 umgerechnet (z. B. „Maya Regli" jetzt am 2026-09-17 statt im
+Geburtsjahr), neben den echten Terminen (Konzert, Sauna, Mittagessen).
 
 **Bug B — Redaktion trifft ISO-Datumsstrings, nicht die eigentlich
 sensiblen Daten (behoben).** `ConsentGate::redactText()`s Telefonnummer-Regex

@@ -22,9 +22,12 @@ QTCONTACTS_USE_NAMESPACE
 #include <extendedcalendar.h>
 #include <sqlitestorage.h>
 #include <extendedstorageobserver.h>
+#include <KCalendarCore/Recurrence>
 
 #include <algorithm>
 #include <QDebug>
+#include <QDateTime>
+#include <QTime>
 #include <QTimeZone>
 
 namespace {
@@ -251,12 +254,37 @@ QVariantMap FullProvider::upcomingEvents(int days)
 
     const KCalendarCore::Event::List events = calendar->events(start, end);
 
+    // events(start, end) does not expand recurring events to their occurrence
+    // within the window -- birthday-notebook entries (yearly RRULE, DTSTART
+    // pinned to the actual birth year) come back with that original,
+    // decades-old DTSTART regardless of whether "this year's" occurrence
+    // actually falls in [start, end]. Observed on real hardware: a 7-day
+    // query returned ~190 entries spanning back to 1604. Re-anchor recurring
+    // events to their real next occurrence ourselves instead of trusting
+    // events() to have done it; drop anything whose occurrence still misses
+    // the window (recurrence exhausted, or a non-recurring event events()
+    // included for some other reason).
+    const QDateTime rangeStart(start, QTime(0, 0));
+    const QDateTime rangeEnd(end, QTime(23, 59, 59));
+
     QVariantList out;
     for (const KCalendarCore::Event::Ptr &event : events) {
+        QDateTime occStart = event->dtStart();
+        QDateTime occEnd   = event->dtEnd();
+
+        if (event->recurs()) {
+            occStart = event->recurrence()->getNextDateTime(rangeStart.addSecs(-1));
+            if (!occStart.isValid() || occStart > rangeEnd)
+                continue;
+            occEnd = occStart.addSecs(event->dtStart().secsTo(event->dtEnd()));
+        } else if (occStart < rangeStart || occStart > rangeEnd) {
+            continue;
+        }
+
         out.append(QVariantMap{
             {"summary",  event->summary()},
-            {"start",    event->dtStart().toString(Qt::ISODate)},
-            {"end",      event->dtEnd().toString(Qt::ISODate)},
+            {"start",    occStart.toString(Qt::ISODate)},
+            {"end",      occEnd.toString(Qt::ISODate)},
             {"location", event->location()}
         });
     }
