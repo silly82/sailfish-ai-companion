@@ -35,6 +35,16 @@ const QRegularExpression &phonePattern()
     return re;
 }
 
+//! YYYY-MM-DD fällt mit Bindestrichen und 8 Ziffern genau in phonePattern()s
+//! Ziffern-/Zeichenbereich — ohne diesen Ausschluss redigiert redactText()
+//! z.B. "2026-01-15T00:00:00" zu "<contact:N>T00:00:00" (beobachtet bei
+//! get_upcoming_events auf echter Hardware, siehe docs/todo-harbour-vs-full.md).
+const QRegularExpression &isoDatePattern()
+{
+    static const QRegularExpression re(QStringLiteral("^\\d{4}-\\d{2}-\\d{2}$"));
+    return re;
+}
+
 int digitCount(const QString &s)
 {
     int n = 0;
@@ -123,6 +133,7 @@ QString ConsentGate::redactText(const QString &text)
             if (pass == 1) {
                 const int digits = digitCount(hit);
                 if (digits < 7 || digits > 15) continue;
+                if (isoDatePattern().match(hit).hasMatch()) continue;
             }
             rebuilt += out.mid(last, m.capturedStart() - last);
             rebuilt += placeholderFor(hit);

@@ -95,6 +95,25 @@ void TestConsentGate::leavesHarmlessNumbersAlone()
     QCOMPARE(out.value(QStringLiteral("version")).toString(), QStringLiteral("5.0.0.62"));
 }
 
+void TestConsentGate::leavesIsoDatesAlone()
+{
+    // phonePattern() matched "2026-01-15" innerhalb eines ISO-Zeitstempels
+    // (8 Ziffern + Bindestriche liegen im selben Muster wie eine
+    // Telefonnummer) -- auf echter Hardware beobachtet bei
+    // get_upcoming_events, wo start/end zu "<contact:N>T00:00:00" wurden.
+    ConsentGate gate;
+    const QVariantMap in{
+        {"start", "2026-01-15T00:00:00"},
+        {"end",   "2026-01-22T00:00:00"}
+    };
+
+    const QVariantMap out = gate.redact(in);
+    QCOMPARE(out.value(QStringLiteral("start")).toString(),
+             QStringLiteral("2026-01-15T00:00:00"));
+    QCOMPARE(out.value(QStringLiteral("end")).toString(),
+             QStringLiteral("2026-01-22T00:00:00"));
+}
+
 void TestConsentGate::restoresPlaceholdersInAnswer()
 {
     ConsentGate gate;

@@ -13,6 +13,7 @@ private slots:
     void reusesPlaceholderForSameValue();
     void redactsBySensitiveKey();
     void leavesHarmlessNumbersAlone();
+    void leavesIsoDatesAlone();
     void restoresPlaceholdersInAnswer();
     void forgetsPlaceholders();
 };

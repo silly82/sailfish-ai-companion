@@ -360,4 +360,51 @@ Eigentlicher Fix (Entwurf, ohne Gerät nicht verifizierbar):
 - `Privileged` nur setzen, wenn wirklich nötig — es ist die Pseudo-Permission,
   die `${PRIVILEGED}` öffnet, und in Harbour verboten.
 
+## Nachtrag: F1 auf echter Hardware bestätigt, zwei neue Bugs gefunden (2026-09-15)
+
+`sailfishai` 0.9.4 auf einem Jolla Phone 2026 (SFOS 5.2.0.17 „Finlayson", per USB/`devel-su rpm -Uvh`) installiert und getestet, nicht nur im Emulator:
+
+- **F1 real bestätigt**: `pgrep -a firejail` zeigt auf dem echten Gerät dieselben
+  `--profile=.../Contacts.permission --profile=.../Calendar.permission
+  --profile=.../CommunicationHistory.permission`-Einträge wie im Emulator.
+  Berechtigungsdialog erschien beim ersten Start wie erwartet.
+- **H7-Update**: `sudo cat /proc/<pid>/mounts` für den laufenden Prozess zeigt
+  auf diesem Gerät **kein** `.../privileged/Contacts`/`Calendar` — anders als
+  im Emulator ist `/run/firejail/mnt/privileged/` hier komplett leer
+  (`ls` bestätigt), obwohl die echten Daten unter
+  `~/.local/share/system/privileged/{Contacts,Calendar}` vorhanden sind
+  (Owner `privileged:privileged`). Root Cause weiterhin offen — Geräte-/
+  OS-Setup-Problem, kein App-Bug, siehe die schon vorhandene H7-Notiz oben.
+  Trotzdem lief `get_upcoming_events` fehlerfrei (kein `query_failed`) — der
+  fehlende Mount blockiert den Zugriff auf diesem konkreten Gerät also nicht
+  vollständig, mkcal kommt offenbar über einen anderen Pfad an die Daten.
+
+**Bug A — `get_upcoming_events` liefert vermutlich mkcal's automatisches
+„Geburtstage aus Kontakten"-Notebook statt echter Termine.** Ergebnis (siehe
+`tests`/echter Chat-Turn): ~160 Einträge, `summary` sind durchweg echte
+Kontaktnamen (z. B. „Marcel Arnold", „Judy Planzer") statt Termin-Titel,
+unabhängig vom `days`-Parameter (7 Tage angefragt, alle ~160 Kontakte
+zurückgekommen). Betrifft `FullProvider::upcomingEvents()`
+(`src/platform/full/fullprovider.cpp`) — vermutlich liest
+`calendar->events(start, end)` auch wiederkehrende ganztägige Einträge aus
+einer Birthday-Notebook, deren Wiederholungslogik die Datumsgrenze nicht wie
+erwartet respektiert. Noch nicht behoben — braucht eigene Diagnose (welche
+Notebooks `mKCal::ExtendedCalendar` lädt, ob sich die Birthday-Notebook
+gezielt ausschliessen lässt).
+
+**Bug B — Redaktion trifft ISO-Datumsstrings, nicht die eigentlich
+sensiblen Daten (behoben).** `ConsentGate::redactText()`s Telefonnummer-Regex
+(`\+?[0-9][0-9 ()./\-]{5,17}[0-9]`) matched auf `"2026-01-15"` innerhalb eines
+ISO-Zeitstempels (8 Ziffern + Bindestriche fallen ins selbe Muster wie eine
+Telefonnummer) — dadurch wurden `start`/`end` in Bug A zu
+`<contact:N>T00:00:00`. Fix: neuer `isoDatePattern()`-Ausschluss
+(`^\d{4}-\d{2}-\d{2}$`) in der Telefonnummer-Pass von `redactText()`
+(`src/core/consentgate.cpp`), Regressionstest `leavesIsoDatesAlone` in
+`tests/tst_consentgate.cpp`. Bewusst **nicht** angefasst: dass `summary`
+(und `name` bei `find_contact`) nicht per Schlüsselname redigiert werden,
+ist eine bestehende, test-dokumentierte Design-Entscheidung
+(`redactsBySensitiveKey` in `tst_consentgate.cpp` erwartet das explizit) —
+blosse Namen gelten im Projekt als unkritisch, nur Adresse/Telefon/E-Mail
+werden reflexhaft geschwärzt.
+
 
