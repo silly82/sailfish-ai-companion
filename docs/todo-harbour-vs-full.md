@@ -175,7 +175,7 @@ gesammelt aufgeschoben:
 | `Sailfish.Telephony 1.0` | Ungenutzt — `Capabilities::telephony()` ist `true`, obwohl kein Tool es nutzt | **[x] Umgesetzt** | `Capabilities::telephony()` in beiden Zweigen auf `false` — kein konkretes Tool geplant, ein Flag ohne Wirkung ist irreführend (dieselbe Logik wie H2s „Manifest ehrlich machen“ für Contacts) |
 | `Nemo.Notifications 1.0` | „Antwort fertig“, wenn App im Hintergrund war | **Zurückgestellt** | Setzt `Nemo.KeepAlive`/Hintergrundlogik voraus, die es noch nicht gibt — erst sinnvoll, wenn das oben steht |
 | `Amber.Web.Authorization 1.0` | OAuth statt API-Key eintippen — grösster Einzelgewinn laut ursprünglicher Einschätzung, durch die heutige Key-Eingabe-Odyssee (Tastatur-Layout-Kalibrierung per `uinput`) nur bestätigt | **Zurückgestellt** | Kein Quick-Win — braucht Klärung, ob/wie OpenRouter einen OAuth-Code-Flow anbietet, bevor Code entsteht. Auf Wunsch erstmal nicht weiterverfolgt (2026-09-15) |
-| `Sailfish.Pickers 1.0` | Anhänge: Bild → multimodales Modell, Datei → Kontext (`Capabilities::filesystem()` ist `true`, aber leer) | **Zurückgestellt** | Setzt multimodalen Backend-Support voraus (`openrouterbackend.cpp` sendet heute nur Text) — erst das klären, dann Picker anbinden |
+| `Sailfish.Pickers 1.0` | Anhänge: Bild → multimodales Modell | **[x] Umgesetzt (2026-09-15)** | `ImagePickerPage` in `ChatPage.qml`, Bildpfad in `ConversationStore` (neue `image_path`-Spalte), `history()` baut bei vorhandenem Bild ein OpenAI/OpenRouter-Multimodal-`content`-Array (Text + `image_url` als Data-URI, `imageDataUri()` in `conversationstore.cpp`) statt eines reinen Strings — kein Eingriff in `openrouterbackend.cpp` nötig, da `chat()` ohnehin nur ein opakes `QJsonArray` entgegennimmt. Live auf echter Hardware verifiziert: Modell (`deepseek/deepseek-v4.1-flash`) erkannte und beschrieb ein angehängtes Kartenbild korrekt. Keine Vision-Fähigkeits-Filterung in der Modellliste — bewusst nicht gemacht, um den Umfang klein zu halten |
 | `QtMultimedia 5.x` + `Sailfish.Media 1.0` | M6 Sprachein-/-ausgabe, Foto → Vision-Modell | **Zurückgestellt, Teil von M6** | Bereits als eigener Meilenstein in `README.md` getrackt |
 | `QtWebSockets 1.1` | Lokaler Modellserver/Streaming | **Zurückgestellt, Teil von M5** | Bereits als eigener Meilenstein in `README.md` getrackt |
 | `io.thp.pyotherside 1.0-1.6` | Python im Sandbox (M5-Glue) | **Zurückgestellt, Teil von M5** | Bereits als eigener Meilenstein in `README.md` getrackt |
@@ -528,5 +528,41 @@ die echten Werte nicht kennt, und das dem Nutzer auch so mitgeteilt.
 **Einordnung:** Bug C betraf nicht nur `find_contact` — jeder künftige Tool-
 Output mit einem `QStringList`-Feld wäre vom selben Loch betroffen gewesen.
 Aktuell ist `find_contact` der einzige Konsument.
+
+## Nachtrag: Bild-Anhang (`Sailfish.Pickers`) — zwei Permission-Fallstricke (2026-09-15)
+
+Live-Debugging auf echter Hardware (Jolla Phone 2026) beim Umsetzen des
+`ImagePickerPage`-Anhangs deckte zwei getrennte, nicht offensichtliche
+Permission-Lücken auf — beide behoben (`harbour-nemoai.desktop`,
+`sailfishai.desktop`: `Permissions=...;UserDirs;MediaIndexing`):
+
+1. **`Pictures`-Permission allein reicht nicht, damit der Picker überhaupt
+   Bilder anzeigt.** Symptom: Attach-Button funktioniert, `ImagePickerPage`
+   öffnet, aber bleibt leer, obwohl `~/Pictures/...` nachweislich Dateien
+   enthält und im Sandbox-Mount sichtbar ist. Ursache: `ImagePickerPage`
+   listet Inhalte über eine Tracker-/MediaIndexing-Abfrage, nicht per
+   direktem Verzeichnis-Scan — dafür fehlte die `MediaIndexing`-Permission
+   (die im sailjail-Default-Profil normalerweise automatisch dabei ist,
+   aber sobald `[X-Sailjail]` explizit gesetzt ist — wie seit F1 — gilt nur
+   noch die explizite Liste, s. bereits dokumentierter F1-Fallstrick).
+2. **Der Picker zeigt auch Bilder aus `~/Documents` o.ä., nicht nur aus
+   `~/Pictures`.** Symptom: Bild im Picker sichtbar und auswählbar, Senden
+   lief fehlerfrei durch, aber das Modell reagierte, als hätte es nur den
+   Text bekommen — kein Fehler, keine Warnung. Ursache:
+   `ConversationStore::imageDataUri()` öffnet die Datei zum Zeitpunkt des
+   Requests **im eigenen Sandbox-Kontext** der App (nicht dem des Pickers),
+   und `~/Documents` war nicht freigegeben — `QFile::open()` schlägt still
+   fehl, die Funktion gibt bewusst nur eine leere Data-URI statt eines
+   Fehlers zurück (ein fehlendes Bild soll den Rest der Anfrage nicht
+   blockieren), was den eigentlichen Grund verschleiert hat. Fix: statt
+   einzelner `Pictures`-Permission das Sammel-Permission `UserDirs`
+   (`include`s `Documents`/`Downloads`/`Music`/`Pictures`/`PublicDir`/
+   `Videos`) — deckt, wo der Picker tatsächlich hinschaut.
+
+Diagnosemethode: `printf '<pw>\n' | ssh -tt ... devel-su grep -iE
+'documents|pictures' /proc/<pid-des-echten-app-binaries>/mounts` — dabei
+wichtig, die **richtige PID** zu erwischen (`pgrep -af
+'/usr/bin/<app>$'` zeigt sowohl den `invoker`-Prozess als auch das echte
+Binary; nur letzteres hat die relevanten Bind-Mounts).
 
 

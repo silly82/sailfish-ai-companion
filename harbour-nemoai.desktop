@@ -9,4 +9,4 @@ Name[de]=AI Companion
 [X-Sailjail]
 OrganizationName=ch.silly
 ApplicationName=harbour-nemoai
-Permissions=Internet;Secrets
+Permissions=Internet;Secrets;UserDirs;MediaIndexing

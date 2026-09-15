@@ -17,4 +17,4 @@ Name[de]=AI Companion (Vollzugriff)
 [X-Sailjail]
 OrganizationName=ch.silly
 ApplicationName=sailfishai
-Permissions=Internet;Secrets;Contacts;Calendar;CommunicationHistory;Privileged
+Permissions=Internet;Secrets;Contacts;Calendar;CommunicationHistory;UserDirs;MediaIndexing;Privileged

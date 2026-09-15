@@ -24,7 +24,7 @@ class ConversationStore : public QAbstractListModel
 
 public:
     enum Roles { RoleId = Qt::UserRole + 1, RoleRole, RoleContent,
-                 RoleTimestamp, RoleToolName, RolePending };
+                 RoleTimestamp, RoleToolName, RolePending, RoleImagePath };
 
     explicit ConversationStore(QObject *parent = nullptr);
     ~ConversationStore() override;
@@ -32,8 +32,11 @@ public:
     Q_INVOKABLE bool open();
     Q_INVOKABLE int  createConversation(const QString &title);
     Q_INVOKABLE void loadConversation(int id);
+    //! imagePath ist ein lokaler Dateipfad (aus Sailfish.Pickers) -- leer,
+    //! wenn die Nachricht kein Bild traegt. Nur bei Rolle "user" sinnvoll.
     Q_INVOKABLE void appendMessage(int conversationId, const QString &role,
-                                   const QString &content);
+                                   const QString &content,
+                                   const QString &imagePath = QString());
     Q_INVOKABLE void appendDelta(const QString &chunk);   // Streaming
     Q_INVOKABLE void deleteConversation(int id);
 
@@ -80,6 +83,7 @@ private:
         QString toolName;
         QString toolCalls;    //!< JSON-Array, wie es das Modell geschickt hat
         QString toolCallId;   //!< nur bei Rolle "tool"
+        QString imagePath;    //!< lokaler Dateipfad, nur bei Rolle "user"
         bool    pending = false;
     };
 

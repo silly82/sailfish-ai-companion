@@ -44,6 +44,15 @@ ListItem {
             text: qsTr("Tool: %1").arg(model.toolName)
         }
 
+        Image {
+            visible: model.imagePath.length > 0
+            source: visible ? "file://" + model.imagePath : ""
+            width: Theme.itemSizeHuge * 1.5
+            height: Theme.itemSizeHuge * 1.5
+            fillMode: Image.PreserveAspectFit
+            asynchronous: true
+        }
+
         Label {
             width: parent.width
             wrapMode: item.isTool ? Text.NoWrap : Text.WordWrap

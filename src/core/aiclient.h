@@ -41,7 +41,11 @@ public:
     AIClient(KeyStore *keys, ToolRegistry *tools, ConversationStore *store,
              QObject *parent = nullptr);
 
-    Q_INVOKABLE void sendMessage(const QString &text, int conversationId);
+    //! imagePath kommt aus Sailfish.Pickers -- leer, wenn kein Bild angehängt
+    //! wurde. Nur mit einem vision-fähigen Modell sinnvoll; die API selbst
+    //! entscheidet, ob sie es versteht, es gibt hier keine Modell-Filterung.
+    Q_INVOKABLE void sendMessage(const QString &text, int conversationId,
+                                 const QString &imagePath = QString());
     Q_INVOKABLE void refreshModels();
     Q_INVOKABLE void cancel();
 

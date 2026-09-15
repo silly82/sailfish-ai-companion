@@ -16,6 +16,8 @@ private slots:
     void keepsMessageThatOnlyCarriesToolCalls();
     void trimsHalfToolRoundsFromWindow();
     void deleteRemovesMessagesToo();
+    void imagePathRoundtripsThroughTheModel();
+    void historyInlinesImageAsDataUri();
 };
 
 #endif

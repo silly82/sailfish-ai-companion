@@ -4,12 +4,12 @@
 <context>
     <name>AIClient</name>
     <message>
-        <location filename="../src/core/aiclient.cpp" line="100"/>
+        <location filename="../src/core/aiclient.cpp" line="101"/>
         <source>No conversation open</source>
         <translation>Keine Konversation geöffnet</translation>
     </message>
     <message>
-        <location filename="../src/core/aiclient.cpp" line="184"/>
+        <location filename="../src/core/aiclient.cpp" line="185"/>
         <source>Cancelled — the model kept calling tools without stopping</source>
         <translation>Abgebrochen — das Modell ruft ununterbrochen Tools auf</translation>
     </message>
@@ -17,37 +17,37 @@
 <context>
     <name>ChatPage</name>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="49"/>
+        <location filename="../qml/pages/ChatPage.qml" line="63"/>
         <source>Choose model</source>
         <translation>Modell wählen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="53"/>
+        <location filename="../qml/pages/ChatPage.qml" line="67"/>
         <source>Cancel response</source>
         <translation>Antwort abbrechen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="60"/>
+        <location filename="../qml/pages/ChatPage.qml" line="74"/>
         <source>No model</source>
         <translation>Kein Modell</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="62"/>
+        <location filename="../qml/pages/ChatPage.qml" line="76"/>
         <source>Local — nothing leaves the device</source>
         <translation>Lokal — nichts verlässt das Gerät</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="63"/>
+        <location filename="../qml/pages/ChatPage.qml" line="77"/>
         <source>%1 tools active</source>
         <translation>%1 Tools aktiv</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="91"/>
+        <location filename="../qml/pages/ChatPage.qml" line="147"/>
         <source>Message</source>
         <translation>Nachricht</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="92"/>
+        <location filename="../qml/pages/ChatPage.qml" line="148"/>
         <source>Choose a model first</source>
         <translation>Zuerst ein Modell wählen</translation>
     </message>
@@ -78,12 +78,12 @@
 <context>
     <name>ConversationStore</name>
     <message>
-        <location filename="../src/core/conversationstore.cpp" line="31"/>
+        <location filename="../src/core/conversationstore.cpp" line="51"/>
         <source>Data folder not writable</source>
         <translation>Datenordner nicht beschreibbar</translation>
     </message>
     <message>
-        <location filename="../src/core/conversationstore.cpp" line="130"/>
+        <location filename="../src/core/conversationstore.cpp" line="151"/>
         <source>New conversation</source>
         <translation>Neue Konversation</translation>
     </message>

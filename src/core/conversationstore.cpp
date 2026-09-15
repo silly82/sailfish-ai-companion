@@ -2,8 +2,11 @@
 
 #include <QDateTime>
 #include <QDir>
+#include <QFile>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMimeDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -12,6 +15,23 @@
 
 namespace {
 QString nowIso() { return QDateTime::currentDateTimeUtc().toString(Qt::ISODate); }
+
+//! OpenRouter/OpenAI-Multimodal-Format erwartet das Bild inline als
+//! Data-URI im Request -- es gibt kein Hosting, an das wir stattdessen eine
+//! URL schicken koennten. Bei einem nicht mehr lesbaren Pfad (Nutzer hat das
+//! Bild inzwischen geloescht) faellt das Bild aus der Anfrage, nicht der
+//! ganze Request.
+QString imageDataUri(const QString &path)
+{
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) return QString();
+
+    static QMimeDatabase mimeDb;
+    const QString mimeType = mimeDb.mimeTypeForFile(path).name();
+
+    return QStringLiteral("data:%1;base64,%2")
+        .arg(mimeType, QString::fromLatin1(file.readAll().toBase64()));
+}
 }
 
 ConversationStore::ConversationStore(QObject *parent) : QAbstractListModel(parent) {}
@@ -86,7 +106,7 @@ bool ConversationStore::createSchema()
 
     // Bestandsdatenbanken aus M1 kennen die Tool-Spalten noch nicht.
     const QSqlRecord columns = m_db.record(QStringLiteral("messages"));
-    const char *added[] = { "tool_calls", "tool_call_id" };
+    const char *added[] = { "tool_calls", "tool_call_id", "image_path" };
     for (const char *column : added) {
         if (columns.indexOf(QLatin1String(column)) >= 0) continue;
         if (!q.exec(QStringLiteral("ALTER TABLE messages ADD COLUMN %1 TEXT")
@@ -103,8 +123,8 @@ qint64 ConversationStore::insertMessage(int conversationId, const Message &m)
     QSqlQuery q(m_db);
     q.prepare(QStringLiteral(
         "INSERT INTO messages (conversation_id, role, content, tool_name,"
-        "                      tool_calls, tool_call_id, created_at)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?)"));
+        "                      tool_calls, tool_call_id, image_path, created_at)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"));
     q.addBindValue(conversationId);
     q.addBindValue(m.role);
     // Ein default-konstruierter QString ist null, nicht bloss leer — QSQLITE
@@ -114,6 +134,7 @@ qint64 ConversationStore::insertMessage(int conversationId, const Message &m)
     q.addBindValue(m.toolName.isEmpty()   ? QVariant() : QVariant(m.toolName));
     q.addBindValue(m.toolCalls.isEmpty()  ? QVariant() : QVariant(m.toolCalls));
     q.addBindValue(m.toolCallId.isEmpty() ? QVariant() : QVariant(m.toolCallId));
+    q.addBindValue(m.imagePath.isEmpty()  ? QVariant() : QVariant(m.imagePath));
     q.addBindValue(m.timestamp);
     if (!q.exec()) {
         emit errorOccurred(q.lastError().text());
@@ -144,7 +165,8 @@ void ConversationStore::loadConversation(int id)
 {
     QSqlQuery q(m_db);
     q.prepare(QStringLiteral(
-        "SELECT id, role, content, tool_name, tool_calls, tool_call_id, created_at"
+        "SELECT id, role, content, tool_name, tool_calls, tool_call_id,"
+        "       image_path, created_at"
         "  FROM messages WHERE conversation_id = ? ORDER BY id"));
     q.addBindValue(id);
     if (!q.exec()) {
@@ -163,7 +185,8 @@ void ConversationStore::loadConversation(int id)
         m.toolName   = q.value(3).toString();
         m.toolCalls  = q.value(4).toString();
         m.toolCallId = q.value(5).toString();
-        m.timestamp  = q.value(6).toString();
+        m.imagePath  = q.value(6).toString();
+        m.timestamp  = q.value(7).toString();
         m_messages.append(m);
     }
     endResetModel();
@@ -179,11 +202,13 @@ void ConversationStore::setCurrentConversation(int id)
 }
 
 void ConversationStore::appendMessage(int conversationId, const QString &role,
-                                      const QString &content)
+                                      const QString &content,
+                                      const QString &imagePath)
 {
     Message m;
     m.role      = role;
     m.content   = content;
+    m.imagePath = imagePath;
     m.timestamp = nowIso();
 
     m.id = insertMessage(conversationId, m);
@@ -311,8 +336,8 @@ QJsonArray ConversationStore::history(int conversationId, int maxMessages) const
 {
     QSqlQuery q(m_db);
     q.prepare(QStringLiteral(
-        "SELECT role, content, tool_name, tool_calls, tool_call_id FROM ("
-        "  SELECT id, role, content, tool_name, tool_calls, tool_call_id"
+        "SELECT role, content, tool_name, tool_calls, tool_call_id, image_path FROM ("
+        "  SELECT id, role, content, tool_name, tool_calls, tool_call_id, image_path"
         "    FROM messages WHERE conversation_id = ?"
         "  ORDER BY id DESC LIMIT ?) ORDER BY id"));
     q.addBindValue(conversationId);
@@ -322,11 +347,28 @@ QJsonArray ConversationStore::history(int conversationId, int maxMessages) const
     if (!q.exec()) return arr;
     while (q.next()) {
         const QString role       = q.value(0).toString();
+        const QString content    = q.value(1).toString();
         const QString toolCalls  = q.value(3).toString();
         const QString toolCallId = q.value(4).toString();
+        const QString imagePath  = q.value(5).toString();
 
-        QJsonObject o{{QStringLiteral("role"),    role},
-                      {QStringLiteral("content"), q.value(1).toString()}};
+        QJsonObject o{{QStringLiteral("role"), role}};
+        const QString dataUri = imagePath.isEmpty() ? QString() : imageDataUri(imagePath);
+        if (!dataUri.isEmpty()) {
+            // OpenAI/OpenRouter-Multimodal-Format: content wird zum Array,
+            // sobald ein Bild dabei ist -- ein reiner String reicht dann
+            // nicht mehr.
+            o.insert(QStringLiteral("content"), QJsonArray{
+                QJsonObject{{QStringLiteral("type"), QStringLiteral("text")},
+                           {QStringLiteral("text"), content}},
+                QJsonObject{{QStringLiteral("type"), QStringLiteral("image_url")},
+                           {QStringLiteral("image_url"), QJsonObject{
+                               {QStringLiteral("url"), dataUri}
+                           }}}
+            });
+        } else {
+            o.insert(QStringLiteral("content"), content);
+        }
         if (!toolCalls.isEmpty()) {
             o.insert(QStringLiteral("tool_calls"),
                      QJsonDocument::fromJson(toolCalls.toUtf8()).array());
@@ -399,6 +441,7 @@ QVariant ConversationStore::data(const QModelIndex &index, int role) const
     case RoleTimestamp: return m.timestamp;
     case RoleToolName:  return m.toolName;
     case RolePending:   return m.pending;
+    case RoleImagePath: return m.imagePath;
     default:            return QVariant();
     }
 }
@@ -407,5 +450,5 @@ QHash<int, QByteArray> ConversationStore::roleNames() const
 {
     return {{RoleId, "messageId"}, {RoleRole, "role"}, {RoleContent, "content"},
             {RoleTimestamp, "timestamp"}, {RoleToolName, "toolName"},
-            {RolePending, "pending"}};
+            {RolePending, "pending"}, {RoleImagePath, "imagePath"}};
 }

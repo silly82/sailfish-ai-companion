@@ -93,9 +93,10 @@ void AIClient::setStreaming(bool v)
     emit streamingChanged();
 }
 
-void AIClient::sendMessage(const QString &text, int conversationId)
+void AIClient::sendMessage(const QString &text, int conversationId,
+                           const QString &imagePath)
 {
-    if (text.isEmpty() || m_streaming) return;
+    if ((text.isEmpty() && imagePath.isEmpty()) || m_streaming) return;
     if (conversationId < 0) {
         emit errorOccurred(tr("No conversation open"));
         return;
@@ -106,7 +107,7 @@ void AIClient::sendMessage(const QString &text, int conversationId)
     m_pending.clear();
     m_awaitingConsent = false;
 
-    m_store->appendMessage(conversationId, QStringLiteral("user"), text);
+    m_store->appendMessage(conversationId, QStringLiteral("user"), text, imagePath);
     setStreaming(true);
     startRequest();
 }

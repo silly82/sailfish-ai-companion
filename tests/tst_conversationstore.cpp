@@ -1,9 +1,11 @@
 #include "tst_conversationstore.h"
 #include "core/conversationstore.h"
 
+#include <QDir>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QSignalSpy>
+#include <QTemporaryFile>
 #include <QTest>
 #include <QUuid>
 
@@ -248,4 +250,54 @@ void TestConversationStore::deleteRemovesMessagesToo()
     QCOMPARE(store.rowCount(), 0);
     QCOMPARE(store.currentConversation(), -1);
     QVERIFY(store.history(id).isEmpty());
+}
+
+void TestConversationStore::imagePathRoundtripsThroughTheModel()
+{
+    ConversationStore store;
+    QVERIFY(openMemory(store));
+    const int id = store.createConversation(QStringLiteral("Bild"));
+    store.appendMessage(id, QStringLiteral("user"), QStringLiteral("was ist das?"),
+                        QStringLiteral("/tmp/does-not-need-to-exist.jpg"));
+
+    const QModelIndex idx = store.index(0, 0);
+    QCOMPARE(store.data(idx, ConversationStore::RoleImagePath).toString(),
+             QStringLiteral("/tmp/does-not-need-to-exist.jpg"));
+
+    // Ueberlebt auch einen Neuladen aus der DB, nicht nur den In-Memory-Cache.
+    store.loadConversation(id);
+    QCOMPARE(store.data(store.index(0, 0), ConversationStore::RoleImagePath).toString(),
+             QStringLiteral("/tmp/does-not-need-to-exist.jpg"));
+}
+
+void TestConversationStore::historyInlinesImageAsDataUri()
+{
+    QTemporaryFile image(QDir::tempPath() + QStringLiteral("/sfai-test-XXXXXX.png"));
+    QVERIFY(image.open());
+    image.write(QByteArrayLiteral("not a real png, just needs bytes"));
+    image.close();
+
+    ConversationStore store;
+    QVERIFY(openMemory(store));
+    const int id = store.createConversation(QStringLiteral("Bild"));
+    store.appendMessage(id, QStringLiteral("user"), QStringLiteral("was ist das?"),
+                        image.fileName());
+
+    const QJsonArray history = store.history(id);
+    QCOMPARE(history.size(), 1);
+
+    const QJsonValue content = history.first().toObject().value(QStringLiteral("content"));
+    QVERIFY(content.isArray());
+    const QJsonArray parts = content.toArray();
+    QCOMPARE(parts.size(), 2);
+    QCOMPARE(parts.at(0).toObject().value(QStringLiteral("type")).toString(),
+             QStringLiteral("text"));
+    QCOMPARE(parts.at(0).toObject().value(QStringLiteral("text")).toString(),
+             QStringLiteral("was ist das?"));
+    QCOMPARE(parts.at(1).toObject().value(QStringLiteral("type")).toString(),
+             QStringLiteral("image_url"));
+    const QString url = parts.at(1).toObject().value(QStringLiteral("image_url"))
+                             .toObject().value(QStringLiteral("url")).toString();
+    QVERIFY(url.startsWith(QStringLiteral("data:")));
+    QVERIFY(url.contains(QStringLiteral(";base64,")));
 }
