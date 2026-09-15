@@ -681,4 +681,48 @@ sondern auf der Position der US-`/`-Taste. Kalibrieren lohnt sich vor
 sicherheitsrelevantem Text (API-Keys!) über eine kurze Testzeichenkette
 mit sichtbarem Feld, statt das Layout zu raten.
 
+0.9.6: H7 geklärt (siehe oben), `find_contact` deshalb wieder mit
+`available=true` registriert. Der Live-Test auf echter Hardware deckte
+sofort zwei echte, bis dahin ausgelieferte Redaktions-Bugs in
+`ConsentGate` auf: `QVariant::StringList` (das reale Rückgabeformat für
+`phones`/`addresses`) hatte keinen eigenen Fall in `redactValue()` und
+ging komplett unredigiert durch — echte Rufnummern im Klartext ans
+Cloud-Modell. Danach blieben Adressen trotzdem unredigiert, weil
+`isSensitiveKey()` nur die Singular-Form `address` kannte, nicht die
+tatsächlich genutzte Plural-Form `addresses`, und Freitext-Adressen
+matchen ohnehin keine Regex. Beide gefixt, zweimal live auf dem Gerät
+nachgestellt.
+
+0.10.0: die drei H8-Quick-Wins umgesetzt — `Nemo.KeepAlive` hält eine
+Streaming-Antwort am Leben, während das Display blankt;
+`Sailfish.Share` teilt eine Chat-Nachricht per Long-Press-Kontextmenü
+an andere Apps; `Capabilities::telephony()` ehrlich auf `false` (kein
+Tool nutzte es). Ursprünglich als 0.9.7 (Patch) getaggt, noch vor dem
+Release-Build auf 0.10.0 korrigiert — neue Features brauchen laut der
+eigenen Versionierungsregel oben einen Minor-Bump, keinen Patch.
+
+1.0.0: grösstes Feature des Tages — Bild-Anhang über `Sailfish.Pickers`'
+`ImagePickerPage`. `ConversationStore` bekommt eine neue `image_path`-
+Spalte; `history()` baut, wenn eine Nachricht ein Bild trägt, ein
+OpenAI/OpenRouter-Multimodal-`content`-Array (Text + `image_url` als
+inline Base64-Data-URI, `imageDataUri()` in `conversationstore.cpp`)
+statt eines reinen Strings — `openrouterbackend.cpp` bleibt unangetastet,
+weil `chat()` ohnehin nur ein opakes `QJsonArray` entgegennimmt. Keine
+Vision-Fähigkeits-Filterung in der Modellliste, bewusst weggelassen.
+Dabei zwei nicht offensichtliche Sailjail-Permission-Lücken gefunden
+(beide Symptome: kein Fehler, nur stilles Fehlverhalten) — `Pictures`
+allein lässt `ImagePickerPage` leer bleiben, weil der Picker über eine
+Tracker-/`MediaIndexing`-Abfrage läuft statt eines Verzeichnis-Scans;
+und der Picker zeigt auch Inhalte ausserhalb `~/Pictures` (z. B.
+`~/Documents`), deshalb `UserDirs` (Sammel-Permission) statt `Pictures`.
+Details und die Diagnosemethode (`/proc/<pid>/mounts` des **echten**
+App-Binaries, nicht des `invoker`-Prozesses) in
+`docs/todo-harbour-vs-full.md`. Live auf echter Hardware verifiziert:
+Modell erkannte und beschrieb ein angehängtes Kartenbild korrekt.
+Version 1.0.0 statt 0.11.0 — User-Entscheidung, kein mechanischer
+Semver-Schritt: der Funktionsumfang (Streaming-Chat, Tool-Calling mit
+Consent/Redaktion, Secrets-Ablage, Bild-Anhang) plus der komplett
+abgeschlossene Harbour/Full-Schnittstellen-Audit gelten als reif genug
+für die erste stabile Version.
+
 Detailkonzept: `docs/konzept-v2.md`

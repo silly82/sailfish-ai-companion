@@ -104,6 +104,16 @@ The full-access package additionally requires `libcommhistory-qt5`,
 native Messages and Calendar apps; if your device is missing any of them,
 install first with `pkcon install <name>`.
 
+### Image attachments
+
+The attach button next to the message field opens Sailfish.Pickers' image
+picker (same in both targets — no tool, no consent gate, it's a direct part
+of composing the message). The picked file's path is sent as-is; when a
+message carries one, `ConversationStore` builds an OpenAI/OpenRouter-style
+multimodal request (text plus the image inlined as a base64 data URI)
+instead of a plain string. There's no filtering for vision-capable models —
+if the chosen model can't see images, it just answers from the text part.
+
 ### Building for the device
 
 Needs the Sailfish SDK (`sfdk`, from docs.sailfishos.org). It is available for
@@ -235,6 +245,10 @@ the target builds, so keep to Qt 5.6 APIs in `src/core/`.
       no tool used it). Still open: OAuth via `Amber.Web.Authorization`
       instead of typing an API key (deprioritised for now); the OpenRepos
       build has no `sfdk check` equivalent and stays a manual device check
+- [x] **v1.0.0** — first stable release. Image attachments (see
+      [Image attachments](#image-attachments) above) round out the feature
+      set; both targets verified end to end on real hardware, installed
+      and launching cleanly on both the SDK emulator and a real device
 - [ ] M5 Local inference
 - [ ] M6 Voice
 
@@ -351,6 +365,17 @@ Das Vollzugriffs-Paket braucht zur Laufzeit zusätzlich `libcommhistory-qt5`,
 `mkcal-qt5` und `kf5-calendarcore`. Die kommen normalerweise mit den
 nativen Nachrichten- und Kalender-Apps mit; falls dem Gerät eine davon
 fehlt, vorher mit `pkcon install <name>` installieren.
+
+### Bild-Anhänge
+
+Der Attach-Button neben dem Nachrichtenfeld öffnet Sailfish.Pickers'
+Bild-Picker (identisch in beiden Targets — kein Tool, keine Consent-Schleuse,
+es ist direkter Teil des Nachricht-Schreibens). Der gewählte Dateipfad wird
+so wie er ist verwendet; trägt eine Nachricht ein Bild, baut
+`ConversationStore` eine Multimodal-Anfrage im OpenAI/OpenRouter-Format
+(Text plus Bild als eingebettete Base64-Data-URI) statt eines reinen
+Strings. Es gibt keine Filterung auf vision-fähige Modelle — kann das
+gewählte Modell keine Bilder sehen, antwortet es einfach nur auf den Text.
 
 ### Für das Gerät bauen
 
@@ -489,6 +514,11 @@ Target-Build nicht, in `src/core/` also bei Qt-5.6-APIs bleiben.
       offen: OAuth über `Amber.Web.Authorization` statt API-Key-Eintippen
       (vorerst zurückgestellt); der OpenRepos-Build hat kein
       `sfdk check`-Äquivalent und bleibt manueller Gerätetest
+- [x] **v1.0.0** — erste stabile Version. Bild-Anhänge (siehe
+      [Bild-Anhänge](#bild-anhänge) oben) runden den Funktionsumfang ab;
+      beide Targets durchgängig auf echter Hardware verifiziert,
+      installiert und startet sauber sowohl im SDK-Emulator als auch auf
+      echtem Gerät
 - [ ] M5 Lokale Inferenz
 - [ ] M6 Sprachein- und -ausgabe
 
