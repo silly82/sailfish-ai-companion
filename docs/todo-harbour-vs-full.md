@@ -70,8 +70,13 @@ Validatorlauf. Vor dem nächsten Store-Upload gegen einen Tag-Build nachziehen.
 - [x] **F1** `[X-Sailjail]` in `sailfishai.desktop` ergänzt
       (`Permissions=Internet;Secrets;Contacts;Calendar;CommunicationHistory;Privileged`,
       `OrganizationName=ch.silly`/`ApplicationName=sailfishai` geprüft gegen
-      `src/main.cpp`). Auf echter Hardware (`pgrep -a firejail`) noch nicht
-      verifiziert — hier ohne Gerätezugriff nicht möglich. Ohne die Sektion
+      `src/main.cpp`). Im SDK-Emulator (5.1.0.11-i486) verifiziert:
+      installiert, gestartet, zeigt jetzt beim ersten Start den erwarteten
+      Sailjail-Berechtigungsdialog (Calendar, Communication history,
+      Contacts, Internet, Secrets), `pgrep -a firejail` listet die
+      passenden `--profile=...permission`-Einträge (s. F3). Auf echter
+      Hardware noch nicht verifiziert — hier ohne Gerätezugriff nicht
+      möglich. Ohne die Sektion
       bekommt die App das **Default-Profil**
       (`config/50-default-profile.conf`:
       `Audio;Bluetooth;Camera;Compatibility;Internet;Location;MediaIndexing;Microphone;NFC;RemovableMedia;UserDirs;WebView`)
@@ -88,11 +93,23 @@ Validatorlauf. Vor dem nächsten Store-Upload gegen einen Tag-Build nachziehen.
       `${PRIVILEGED}/Calendar`), `CommunicationHistory` (+ `Messages`, wenn
       Telepathie/ofono gebraucht wird) für `read_recent_messages`,
       `Internet` + `Secrets` unverändert.
-- [ ] **F3** `query_failed` beim Kalender gegen F2 gegenprüfen: ohne
-      `Calendar`-Permission ist der privilegierte Kalender-Pfad im Sandbox
-      nicht sichtbar — das erklärt den M4-Befund schlüssiger als ein
-      „Lock-Konflikt“. Erst F2 umsetzen, dann mit dem in
-      `docs/m4-follow-up-tools.md` geplanten mKCal-Logging verifizieren.
+- [x] **F3 (Mount bestätigt, Tool-Call noch offen)** Im SDK-Emulator
+      (5.1.0.11-i486) verifiziert: `sudo cat /proc/<pid>/mounts` für den
+      laufenden, sandboxed `sailfishai`-Prozess zeigt
+      `/home/defaultuser/.local/share/system/privileged/Contacts` **und**
+      `.../privileged/Calendar` als `rw`-Bind-Mounts innerhalb der Sandbox —
+      vorher (ohne `[X-Sailjail]`, siehe F1) waren diese Pfade dort nicht
+      sichtbar. Die generierte `firejail`-Kommandozeile
+      (`pgrep -a firejail`) listet entsprechend
+      `--profile=.../Contacts.permission --profile=.../Calendar.permission
+      --profile=.../CommunicationHistory.permission`. Bestätigt die
+      F3-Hypothese: der fehlende Mount, nicht ein „Lock-Konflikt“, war die
+      wahrscheinlichste Ursache für `query_failed`. Noch nicht getestet:
+      ein echter `get_upcoming_events`-Tool-Call durch den Chat (braucht
+      einen echten API-Key gegen ein Cloud-Modell, hier nicht verfügbar) —
+      der Mount allein beweist noch nicht, dass `mKCal::SqliteStorage` die
+      leere/neue Emulator-Kalenderdatenbank auch tatsächlich fehlerfrei
+      öffnet und lädt.
 - [ ] **F4** `X-Nemo-Application-Type=silica-qt5`, `OrganizationName`,
       `ApplicationName` in beiden Desktop-Dateien müssen zu
       `QStandardPaths`/`QSettings`-Pfaden passen — beim Nachziehen von F1
