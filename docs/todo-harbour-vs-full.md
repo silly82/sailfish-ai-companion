@@ -71,8 +71,13 @@ Validatorlauf. Vor dem nächsten Store-Upload gegen einen Tag-Build nachziehen.
       `--profile=...`-Einträge zeigt. Kein App-Bug, kein Sailjail-Bug —
       ein Deployment-/Testworkflow-Fallstrick, jetzt in `CLAUDE.md`
       dokumentiert.
-- [ ] **H8** Backlog erlaubte, ungenutzte Schnittstellen (Abschnitt weiter
-      unten) — jede einzeln entscheiden, nicht sammeln.
+- [x] **H8 (Triage abgeschlossen, Umsetzung offen)** Alle 17 Punkte einzeln
+      entschieden (Abschnitt weiter unten, Stand 2026-09-15): drei zum
+      Umsetzen (`Nemo.KeepAlive`, `Sailfish.Share`,
+      `Capabilities::telephony()` auf `false`), einer zurückgestellt mit
+      hoher Priorität (`Amber.Web.Authorization`/OAuth), Rest entweder an
+      M5/M6 gebunden oder vorerst verworfen. Die Umsetzung der drei
+      "jetzt"-Punkte ist ein eigener, noch offener Task.
 
 ## To-dos — Target `sailfishai` (OpenRepos, Vollzugriff)
 
@@ -146,30 +151,31 @@ Validatorlauf. Vor dem nächsten Store-Upload gegen einen Tag-Build nachziehen.
       `sfdk check` läuft nur gegen das Harbour-Spec — Full-Builds weiterhin
       nur per `pkcon install` + Gerätetest prüfen.
 
-## Backlog — erlaubt, aber ungenutzt (H8)
+## Backlog — erlaubt, aber ungenutzt (H8, Triage 2026-09-15)
 
 Alles hier ist in der Harbour-Allowlist (Import bzw. Lib bzw. Require) und
-deshalb **kein** Full-Access-Thema. Reihenfolge nach Nutzen für diese App:
+deshalb **kein** Full-Access-Thema. Jeder Punkt einzeln entschieden statt
+gesammelt aufgeschoben:
 
-| Schnittstelle | Erlaubt als | Nutzen |
-|---|---|---|
-| `Nemo.KeepAlive 1.2`, `libkeepalive.so.1` | QML + Lib + `qml(Nemo.KeepAlive)` | lange Streaming-Antwort zu Ende bringen, Display aus (`Capabilities::background()` ist heute `false`) |
-| `Nemo.Notifications 1.0` | QML + `libnemonotifications-qt5.so.1` | „Antwort fertig“, wenn die App im Hintergrund war (rechtfertigt H4) |
-| `Amber.Web.Authorization 1.0` | QML + `libamberwebauthorization.so.1` | OAuth-Autorisierungscode statt API-Key-Eintippen — grösster Einzelgewinn |
-| `Sailfish.Pickers 1.0` + Permissions `Documents`/`Downloads`/`Pictures`/`UserDirs`/`PublicDir` | QML + Permissions | Anhänge: Bild → multimodales Modell, Datei → Kontext (`Capabilities::filesystem()` ist `true`, aber leer) |
-| `QtMultimedia 5.x` + `Sailfish.Media 1.0` + Permissions `Audio`/`Microphone`/`Camera` | QML + `qt5-qtmultimedia` | M6 Sprachein-/-ausgabe, Foto → Vision-Modell |
-| `Sailfish.WebView 1.0` + Permission `WebView` | QML + `sailfish-components-webview-qt5` | Markdown/HTML-Antworten rendern, OAuth-Seite anzeigen |
-| `Sailfish.Share 1.0` | QML | Antwort in andere Apps weitergeben |
-| `Sailfish.Accounts 1.0`, `libsailfishaccounts.so.0` + Permission `Accounts` | QML + Lib + Permission | Provider-Zugang als Systemkonto statt app-lokal |
-| `Sailfish.Crypto 1.0` | QML + `libsailfishcrypto.so.0` | Verlauf/Keys zusätzlich verschlüsseln (Cloud-Kontext) |
-| `QtPositioning 5.2/5.4`, `libQt5Positioning.so.5` + Permission `Location` | QML + Lib + Permission | Standort-/Wettertool |
-| `QtWebSockets 1.1` | QML + Lib | lokaler Modellserver/Streaming für M5 |
-| `Amber.Mpris 1.0` | QML + `amber-qml-plugin-mpris` | Medienspieler steuern |
-| `Nemo.DBus 2.0`, `org.nemomobile.contacts 1.0`, `org.freedesktop.contextkit 1.0` | QML | Systemdienste ohne C++ erreichen; Akku/Netz offiziell statt sysfs (C++-ContextKit gibt es nicht im Sysroot) |
-| `Sailfish.Telephony 1.0` + `qml(Sailfish.Telephony)` | QML + Require | `Capabilities::telephony()` ist `true`, aber kein Tool nutzt es |
-| `QtFeedback 5.0` | QML (nur `ThemeEffect.play()`, PressWeak/Press/PressStrong) | dezente Haptik bei Senden/Consent |
-| `libmlite5.so.0`, `libcurl.so.4`, `libcrypto.so.3`/`libssl.so.3`, `libmlite` | Libs | Helfer, alternativer HTTP-Client, Signieren/Pinning für Cloud-STT/TTS |
-| `io.thp.pyotherside 1.0-1.6` | QML-Import | Python im Sandbox (M5-Glue) |
+| Schnittstelle | Nutzen | Entscheidung | Begründung |
+|---|---|---|---|
+| `Nemo.KeepAlive 1.2` | Streaming-Antwort zu Ende bringen, Display aus (`Capabilities::background()` ist `false`) | **Umsetzen (eigener Task)** | Kleiner, klarer Nutzen, keine neue UI-Fläche, behebt eine echte Lücke (Display-Timeout kann eine Antwort abschneiden) |
+| `Sailfish.Share 1.0` | Antwort an andere App weitergeben | **Umsetzen (eigener Task)** | Kleine, saubere Ergänzung (Silica `ShareAction`), kein Backend-Eingriff |
+| `Sailfish.Telephony 1.0` | Ungenutzt — `Capabilities::telephony()` ist `true`, obwohl kein Tool es nutzt | **Umsetzen: `telephony()` auf `false`** | Kein konkretes Tool geplant; ein Capability-Flag, das nichts freischaltet, ist irreführend — dieselbe Logik wie H2s „Manifest ehrlich machen“ für Contacts |
+| `Nemo.Notifications 1.0` | „Antwort fertig“, wenn App im Hintergrund war | **Zurückgestellt** | Setzt `Nemo.KeepAlive`/Hintergrundlogik voraus, die es noch nicht gibt — erst sinnvoll, wenn das oben steht |
+| `Amber.Web.Authorization 1.0` | OAuth statt API-Key eintippen — grösster Einzelgewinn laut ursprünglicher Einschätzung, durch die heutige Key-Eingabe-Odyssee (Tastatur-Layout-Kalibrierung per `uinput`) nur bestätigt | **Zurückgestellt, hohe Priorität** | Kein Quick-Win — braucht Klärung, ob/wie OpenRouter einen OAuth-Code-Flow anbietet, bevor Code entsteht. Nächste Session vorschlagen |
+| `Sailfish.Pickers 1.0` | Anhänge: Bild → multimodales Modell, Datei → Kontext (`Capabilities::filesystem()` ist `true`, aber leer) | **Zurückgestellt** | Setzt multimodalen Backend-Support voraus (`openrouterbackend.cpp` sendet heute nur Text) — erst das klären, dann Picker anbinden |
+| `QtMultimedia 5.x` + `Sailfish.Media 1.0` | M6 Sprachein-/-ausgabe, Foto → Vision-Modell | **Zurückgestellt, Teil von M6** | Bereits als eigener Meilenstein in `README.md` getrackt |
+| `QtWebSockets 1.1` | Lokaler Modellserver/Streaming | **Zurückgestellt, Teil von M5** | Bereits als eigener Meilenstein in `README.md` getrackt |
+| `io.thp.pyotherside 1.0-1.6` | Python im Sandbox (M5-Glue) | **Zurückgestellt, Teil von M5** | Bereits als eigener Meilenstein in `README.md` getrackt |
+| `QtFeedback 5.0` | Dezente Haptik bei Senden/Consent | **Zurückgestellt** | Reines Politur-Feature, kein blockierendes Problem |
+| `QtPositioning 5.2/5.4` | Standort-/Wettertool | **Zurückgestellt** | Sinnvolle Tool-Idee, aber kein konkreter Bedarf/Anfrage bisher — neues Tool heisst neuer Consent-Flow, nicht nebenbei zu machen |
+| `Sailfish.WebView 1.0` | Markdown/HTML-Antworten rendern, OAuth-Seite anzeigen | **Verworfen (vorerst)** | Aktuelle Markdown-Darstellung im Chat funktioniert bereits (s. Screenshots vom Live-Test); kein akuter Schmerzpunkt |
+| `Sailfish.Accounts 1.0` | Provider-Zugang als Systemkonto statt app-lokal | **Verworfen (vorerst)** | Passt nicht zum aktuellen Ein-Key-Modell ohne echten OAuth-Flow — erst relevant, falls Amber.Web.Authorization kommt |
+| `Sailfish.Crypto 1.0` | Verlauf/Keys zusätzlich verschlüsseln | **Verworfen** | Der API-Key ist bereits über `Sailfish.Secrets` verschlüsselt; kein Anlass, den Verlauf zusätzlich zu verschlüsseln |
+| `Amber.Mpris 1.0` | Medienspieler steuern | **Verworfen** | Kein erkennbarer Bezug zu einem „AI Companion"-Chat — Tool-Fläche ohne klaren Bedarf |
+| `Nemo.DBus 2.0`, `org.freedesktop.contextkit 1.0` | Akku/Netz offiziell statt sysfs | **Verworfen** | Der sysfs-Ansatz ist heute mehrfach auf echter Hardware verifiziert und funktioniert (s. `get_battery_status`/`get_network_status`-Tests) — kein Grund, ein laufendes System umzubauen |
+| `libmlite5.so.0`, `libcurl.so.4`, `libcrypto.so.3`/`libssl.so.3` | Alternativer HTTP-Client, Signieren/Pinning | **Verworfen (vorerst)** | Kein konkreter Bedarf — `QNetworkAccessManager`/`QSsl` decken den heutigen OpenRouter-Zugriff ab; erst bei einem echten Anlass (z. B. Cert-Pinning für Cloud-STT/TTS in M6) neu bewerten |
 
 ## In Harbour grundsätzlich nicht möglich
 
