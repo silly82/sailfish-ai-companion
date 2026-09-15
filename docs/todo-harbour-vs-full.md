@@ -98,11 +98,14 @@ Validatorlauf. Vor dem nächsten Store-Upload gegen einen Tag-Build nachziehen.
       `CommunicationHistory`, `Messages`, `Phone`, `Notifications`,
       `Sharing`, `Accounts` sowie die Pseudo-Permission `Privileged`
       (`daemon/permissions.h: PERMISSION_PRIVILEGED`).
-- [ ] **F2** Konkretes Ziel für die drei Vollzugriff-Tools:
-      `Contacts` (find_contact), `Calendar` (get_upcoming_events, mkcal liest
-      `${PRIVILEGED}/Calendar`), `CommunicationHistory` (+ `Messages`, wenn
-      Telepathie/ofono gebraucht wird) für `read_recent_messages`,
-      `Internet` + `Secrets` unverändert.
+- [x] **F2** Ziel wie beschrieben durch F1 umgesetzt: `sailfishai.desktop`
+      deklariert `Permissions=Internet;Secrets;Contacts;Calendar;
+      CommunicationHistory;Privileged` — deckt `find_contact` (`Contacts`),
+      `get_upcoming_events` (`Calendar`) und `read_recent_messages`
+      (`CommunicationHistory`) genau wie hier gefordert ab. `Messages`
+      wurde nicht ergänzt, da `read_recent_messages` laut
+      `fullprovider.cpp` über `libcommhistory-qt5`, nicht Telepathie/ofono
+      geht.
 - [x] **F3 (vollständig bestätigt)** Zwei Belege im SDK-Emulator
       (5.1.0.11-i486):
       1. `sudo cat /proc/<pid>/mounts` für den laufenden, sandboxed
@@ -130,10 +133,15 @@ Validatorlauf. Vor dem nächsten Store-Upload gegen einen Tag-Build nachziehen.
       eigene Bugs freigelegt hat (siehe „Nachtrag“ unten): eine
       Redaktions-Falscherkennung auf ISO-Datumsstrings und eine fehlende
       Rekurrenz-Expansion für wiederkehrende Termine. Beide behoben.
-- [ ] **F4** `X-Nemo-Application-Type=silica-qt5`, `OrganizationName`,
-      `ApplicationName` in beiden Desktop-Dateien müssen zu
-      `QStandardPaths`/`QSettings`-Pfaden passen — beim Nachziehen von F1
-      mitprüfen.
+- [x] **F4** Geprüft: beide Desktop-Dateien deklarieren
+      `X-Nemo-Application-Type=silica-qt5`; `OrganizationName=ch.silly`/
+      `ApplicationName={harbour-nemoai,sailfishai}` stimmen exakt mit
+      `app->setOrganizationName("ch.silly")`/
+      `app->setApplicationName(SFAI_TARGET_NAME)` in `src/main.cpp`
+      überein. Auf echter Hardware (Jolla Phone 2026) zusätzlich empirisch
+      bestätigt: `~/.config/ch.silly/sailfishai/settings.ini` und
+      `~/.local/share/ch.silly/sailfishai/history.db` liegen genau dort,
+      wo diese Namen es vorhersagen.
 - [ ] **F5** Full-Target braucht die Harbour-Allowlist nicht, aber
       `sfdk check` läuft nur gegen das Harbour-Spec — Full-Builds weiterhin
       nur per `pkcon install` + Gerätetest prüfen.
