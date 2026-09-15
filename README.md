@@ -208,28 +208,33 @@ the target builds, so keep to Qt 5.6 APIs in `src/core/`.
       approval.** M3 is otherwise complete
 - [x] M4 Full target / OpenRepos — calendar/SMS/`run_command` tools
       implemented (see [Full-access tools](#full-access-tools) above);
-      installs and launches cleanly, verified on the SDK emulator including
-      real navigation (conversation list, pulley menu, Settings, Tools &
-      Permissions) driven by a small `uinput`-based touch injector — no
-      VNC/RDP setup needed, see CLAUDE.md for how. The one flow still not
-      click-tested is an actual message send with tool consent, since that
-      needs a real API key against a live cloud model, not available in
-      this environment. A real-device self-test also surfaced three open
-      gaps in the full-access tools — calendar access failing with
-      `query_failed`, `find_contact` still unimplemented, and `run_command`
-      timing out on interactive programs like `top` — tracked with a fix
-      plan in [`docs/m4-follow-up-tools.md`](docs/m4-follow-up-tools.md)
-- [ ] Interface audit follow-ups — itemised per target in
-      [`docs/todo-harbour-vs-full.md`](docs/todo-harbour-vs-full.md). An
-      audit against the real validator/permission configs found: the Harbour
-      target links **QtContacts, which is not an allowed Harbour library**
-      (`Cannot link to shared library`); `Contacts`/`Bluetooth` permissions
-      and the notifications require are declared without a matching code
-      path; and `sailfishai` runs in sailjail's **default profile** instead
-      of unsandboxed, because its desktop file has no `[X-Sailjail]`. The
-      same document lists the allowed-but-unused interfaces (KeepAlive, Web
-      Authorization, Pickers, Multimedia, Share, Accounts, Location) and
-      what is out of reach in Harbour by design
+      installs and launches cleanly. Verified end-to-end on real hardware
+      (Jolla Phone 2026) against a live cloud model: message send with
+      tool consent, `get_upcoming_events`, and `find_contact` all
+      round-trip correctly. The three gaps from the original self-test
+      (calendar `query_failed`, `find_contact` unimplemented, `run_command`
+      timing out on interactive programs) are resolved — see the interface
+      audit below and [`docs/m4-follow-up-tools.md`](docs/m4-follow-up-tools.md)
+- [x] Interface audit and follow-ups — complete, itemised in
+      [`docs/todo-harbour-vs-full.md`](docs/todo-harbour-vs-full.md). Fixed
+      against the real validator/permission configs: QtContacts removed
+      from the Harbour build (not an allowed library), unused
+      `Bluetooth`/`Contacts` permissions and the Notifications require
+      dropped, missing Secrets plugin requires added, and `sailfishai.desktop`
+      now declares its `[X-Sailjail]` permissions explicitly (it was running
+      in sailjail's minimal default profile instead of unsandboxed). Testing
+      this on real hardware also surfaced two real bugs, both fixed:
+      `ConsentGate` was redacting ISO date strings as phone numbers, and
+      `get_upcoming_events` returned every recurring (birthday) event's raw,
+      decades-old date instead of its actual next occurrence. `find_contact`
+      is re-enabled, after fixing a redaction gap that let real phone
+      numbers/addresses through to the cloud model unredacted. Three
+      previously-unused allowed interfaces are now in use: `Nemo.KeepAlive`
+      (protects a streaming reply from display suspend), `Sailfish.Share`
+      (share a message), and an honest `Capabilities::telephony()` (`false`,
+      no tool used it). Still open: OAuth via `Amber.Web.Authorization`
+      instead of typing an API key (deprioritised for now); the OpenRepos
+      build has no `sfdk check` equivalent and stays a manual device check
 - [ ] M5 Local inference
 - [ ] M6 Voice
 
@@ -454,31 +459,36 @@ Target-Build nicht, in `src/core/` also bei Qt-5.6-APIs bleiben.
       auf Freigabe.** Damit ist M3 sonst abgeschlossen
 - [x] M4 Full-Target / OpenRepos — Kalender-/SMS-/`run_command`-Tools
       implementiert (siehe [Tools im Vollzugriffs-Build](#tools-im-vollzugriffs-build)
-      oben); installiert und startet sauber, auf dem SDK-Emulator verifiziert
-      inklusive echter Navigation (Konversationsliste, Pulley-Menü,
-      Einstellungen, Tools & Freigaben) über einen kleinen
-      `uinput`-basierten Touch-Injektor — kein VNC/RDP-Setup nötig, siehe
-      CLAUDE.md für den Weg dahin. Einzig eine echte Nachricht mit
-      Tool-Consent ist noch nicht durchgeklickt, da das einen echten
-      API-Key gegen ein laufendes Cloud-Modell braucht, den es in dieser
-      Umgebung nicht gibt. Ein Selbsttest auf echter Hardware hat zudem drei
-      offene Lücken in den Full-Access-Tools aufgedeckt — Kalenderzugriff
-      scheitert mit `query_failed`, `find_contact` ist noch nicht
-      implementiert, und `run_command` läuft bei interaktiven Programmen wie
-      `top` in einen Timeout — mit Fix-Plan festgehalten in
+      oben); installiert und startet sauber. Auf echter Hardware (Jolla
+      Phone 2026) gegen ein echtes Cloud-Modell durchgängig verifiziert:
+      Nachricht mit Tool-Consent, `get_upcoming_events` und `find_contact`
+      laufen alle sauber durch. Die drei Lücken aus dem ursprünglichen
+      Selbsttest (Kalenderzugriff `query_failed`, `find_contact`
+      unimplementiert, `run_command`-Timeout bei interaktiven Programmen)
+      sind behoben — siehe Schnittstellen-Audit unten und
       [`docs/m4-follow-up-tools.md`](docs/m4-follow-up-tools.md)
-- [ ] Nacharbeiten Schnittstellen-Audit — pro Target aufgelistet in
-      [`docs/todo-harbour-vs-full.md`](docs/todo-harbour-vs-full.md). Ein
-      Abgleich gegen die echten Validator-/Permission-Configs ergab: das
-      Harbour-Target linkt **QtContacts, das keine erlaubte Harbour-Library
-      ist** (`Cannot link to shared library`); die Permissions `Contacts`/
-      `Bluetooth` und die Notifications-Require sind deklariert, aber ohne
-      passenden Codepfad; und `sailfishai` läuft im **Default-Profil** von
-      sailjail statt unsandboxed, weil die Desktop-Datei keine
-      `[X-Sailjail]`-Sektion hat. Dasselbe Dokument listet die erlaubten,
-      aber ungenutzten Schnittstellen (KeepAlive, Web Authorization,
-      Pickers, Multimedia, Share, Accounts, Location) und was in Harbour
-      prinzipbedingt nicht geht
+- [x] Schnittstellen-Audit und Nacharbeiten — abgeschlossen, im Detail in
+      [`docs/todo-harbour-vs-full.md`](docs/todo-harbour-vs-full.md). Gegen
+      die echten Validator-/Permission-Configs behoben: QtContacts aus dem
+      Harbour-Build entfernt (keine erlaubte Library), ungenutzte
+      `Bluetooth`-/`Contacts`-Permissions und das Notifications-Require
+      gestrichen, fehlende Secrets-Plugin-Requires ergänzt, und
+      `sailfishai.desktop` deklariert jetzt seine `[X-Sailjail]`-Permissions
+      explizit (lief vorher im minimalen Default-Profil statt unsandboxed).
+      Beim Testen auf echter Hardware kamen dabei zwei echte Bugs zum
+      Vorschein, beide behoben: `ConsentGate` redigierte ISO-Datumsstrings
+      fälschlich als Telefonnummern, und `get_upcoming_events` gab bei
+      wiederkehrenden Terminen (Geburtstage) das rohe, jahrzehntealte Datum
+      statt des tatsächlichen nächsten Vorkommens zurück. `find_contact` ist
+      wieder aktiv, nachdem eine Redaktions-Lücke behoben wurde, durch die
+      echte Telefonnummern/Adressen unredigiert ans Cloud-Modell gingen. Drei
+      bisher ungenutzte, erlaubte Schnittstellen sind jetzt im Einsatz:
+      `Nemo.KeepAlive` (schützt eine Streaming-Antwort vor Display-Suspend),
+      `Sailfish.Share` (Nachricht teilen) und ein ehrliches
+      `Capabilities::telephony()` (`false`, kein Tool nutzte es). Weiterhin
+      offen: OAuth über `Amber.Web.Authorization` statt API-Key-Eintippen
+      (vorerst zurückgestellt); der OpenRepos-Build hat kein
+      `sfdk check`-Äquivalent und bleibt manueller Gerätetest
 - [ ] M5 Lokale Inferenz
 - [ ] M6 Sprachein- und -ausgabe
 
