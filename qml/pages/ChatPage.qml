@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import Nemo.KeepAlive 1.2
 import "../components"
 
 /*
@@ -11,6 +12,12 @@ Page {
     id: page
     property int conversationId: -1
     allowedOrientations: Orientation.All
+
+    // Verhindert Suspend, waehrend eine Antwort streamt — das Display darf
+    // trotzdem blanken, der Request laeuft im Hintergrund zu Ende (H8).
+    KeepAlive {
+        enabled: AI.streaming
+    }
 
     Connections {
         target: AI

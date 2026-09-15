@@ -17,37 +17,37 @@
 <context>
     <name>ChatPage</name>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="42"/>
+        <location filename="../qml/pages/ChatPage.qml" line="49"/>
         <source>Choose model</source>
         <translation>Modell wählen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="46"/>
+        <location filename="../qml/pages/ChatPage.qml" line="53"/>
         <source>Cancel response</source>
         <translation>Antwort abbrechen</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="53"/>
+        <location filename="../qml/pages/ChatPage.qml" line="60"/>
         <source>No model</source>
         <translation>Kein Modell</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="55"/>
+        <location filename="../qml/pages/ChatPage.qml" line="62"/>
         <source>Local — nothing leaves the device</source>
         <translation>Lokal — nichts verlässt das Gerät</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="56"/>
+        <location filename="../qml/pages/ChatPage.qml" line="63"/>
         <source>%1 tools active</source>
         <translation>%1 Tools aktiv</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="84"/>
+        <location filename="../qml/pages/ChatPage.qml" line="91"/>
         <source>Message</source>
         <translation>Nachricht</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ChatPage.qml" line="85"/>
+        <location filename="../qml/pages/ChatPage.qml" line="92"/>
         <source>Choose a model first</source>
         <translation>Zuerst ein Modell wählen</translation>
     </message>
@@ -173,7 +173,12 @@
 <context>
     <name>MessageDelegate</name>
     <message>
-        <location filename="../qml/components/MessageDelegate.qml" line="25"/>
+        <location filename="../qml/components/MessageDelegate.qml" line="18"/>
+        <source>Share</source>
+        <translation>Teilen</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/MessageDelegate.qml" line="44"/>
         <source>Tool: %1</source>
         <translation>Werkzeug: %1</translation>
     </message>

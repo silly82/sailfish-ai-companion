@@ -71,13 +71,23 @@ Validatorlauf. Vor dem nächsten Store-Upload gegen einen Tag-Build nachziehen.
       `--profile=...`-Einträge zeigt. Kein App-Bug, kein Sailjail-Bug —
       ein Deployment-/Testworkflow-Fallstrick, jetzt in `CLAUDE.md`
       dokumentiert.
-- [x] **H8 (Triage abgeschlossen, Umsetzung offen)** Alle 17 Punkte einzeln
-      entschieden (Abschnitt weiter unten, Stand 2026-09-15): drei zum
-      Umsetzen (`Nemo.KeepAlive`, `Sailfish.Share`,
-      `Capabilities::telephony()` auf `false`), einer zurückgestellt mit
-      hoher Priorität (`Amber.Web.Authorization`/OAuth), Rest entweder an
-      M5/M6 gebunden oder vorerst verworfen. Die Umsetzung der drei
-      "jetzt"-Punkte ist ein eigener, noch offener Task.
+- [x] **H8 (Triage + die drei Quick-Wins umgesetzt)** Alle 17 Punkte einzeln
+      entschieden (Abschnitt weiter unten, Stand 2026-09-15). Die drei
+      "jetzt"-Punkte (`Nemo.KeepAlive`, `Sailfish.Share`,
+      `Capabilities::telephony()` auf `false`) sind umgesetzt und auf
+      echter Hardware verifiziert (Jolla Phone 2026). Ein Punkt bleibt
+      zurückgestellt mit hoher Priorität (`Amber.Web.Authorization`/OAuth),
+      Rest entweder an M5/M6 gebunden oder vorerst verworfen.
+      **Korrektur zur ursprünglichen Recherche:** Die frühere Tabelle
+      notierte `qml(Nemo.KeepAlive)` als nötige `Requires:`-Zeile — das
+      ist falsch. Die echte `allowed_requires.conf`
+      (`/srv/mer/targets/.../usr/share/sdk-harbour-rpmvalidator/`, per
+      `sfdk engine exec grep` gefunden) kennt für KeepAlive nur
+      `libkeepalive`/`libkeepalive-glib` (Paketname, keine `qml()`-Form),
+      `Sailfish.Share` taucht dort gar nicht auf. `sfdk check` läuft für
+      beide QML-Imports **ohne jede explizite Requires-Zeile** sauber
+      durch — offenbar über die Basis-Silica-Abhängigkeit ohnehin
+      garantiert vorhanden.
 
 ## To-dos — Target `sailfishai` (OpenRepos, Vollzugriff)
 
@@ -159,9 +169,9 @@ gesammelt aufgeschoben:
 
 | Schnittstelle | Nutzen | Entscheidung | Begründung |
 |---|---|---|---|
-| `Nemo.KeepAlive 1.2` | Streaming-Antwort zu Ende bringen, Display aus (`Capabilities::background()` ist `false`) | **Umsetzen (eigener Task)** | Kleiner, klarer Nutzen, keine neue UI-Fläche, behebt eine echte Lücke (Display-Timeout kann eine Antwort abschneiden) |
-| `Sailfish.Share 1.0` | Antwort an andere App weitergeben | **Umsetzen (eigener Task)** | Kleine, saubere Ergänzung (Silica `ShareAction`), kein Backend-Eingriff |
-| `Sailfish.Telephony 1.0` | Ungenutzt — `Capabilities::telephony()` ist `true`, obwohl kein Tool es nutzt | **Umsetzen: `telephony()` auf `false`** | Kein konkretes Tool geplant; ein Capability-Flag, das nichts freischaltet, ist irreführend — dieselbe Logik wie H2s „Manifest ehrlich machen“ für Contacts |
+| `Nemo.KeepAlive 1.2` | Streaming-Antwort zu Ende bringen, Display aus (`Capabilities::background()` ist `false`) | **[x] Umgesetzt** | `KeepAlive { enabled: AI.streaming }` in `ChatPage.qml`; `Capabilities::background()` im `SFAI_HARBOUR`-Zweig auf `true`. Live auf echter Hardware verifiziert: Streaming läuft durch, App bleibt stabil |
+| `Sailfish.Share 1.0` | Antwort an andere App weitergeben | **[x] Umgesetzt** | `ShareAction` + `menu: ContextMenu { MenuItem { text: qsTr("Share") ... } }` in `MessageDelegate.qml` (long-press, nur bei fertigen Nicht-Tool-Nachrichten). Live verifiziert: Kontextmenü und nativer Share-Dialog funktionieren |
+| `Sailfish.Telephony 1.0` | Ungenutzt — `Capabilities::telephony()` ist `true`, obwohl kein Tool es nutzt | **[x] Umgesetzt** | `Capabilities::telephony()` in beiden Zweigen auf `false` — kein konkretes Tool geplant, ein Flag ohne Wirkung ist irreführend (dieselbe Logik wie H2s „Manifest ehrlich machen“ für Contacts) |
 | `Nemo.Notifications 1.0` | „Antwort fertig“, wenn App im Hintergrund war | **Zurückgestellt** | Setzt `Nemo.KeepAlive`/Hintergrundlogik voraus, die es noch nicht gibt — erst sinnvoll, wenn das oben steht |
 | `Amber.Web.Authorization 1.0` | OAuth statt API-Key eintippen — grösster Einzelgewinn laut ursprünglicher Einschätzung, durch die heutige Key-Eingabe-Odyssee (Tastatur-Layout-Kalibrierung per `uinput`) nur bestätigt | **Zurückgestellt, hohe Priorität** | Kein Quick-Win — braucht Klärung, ob/wie OpenRouter einen OAuth-Code-Flow anbietet, bevor Code entsteht. Nächste Session vorschlagen |
 | `Sailfish.Pickers 1.0` | Anhänge: Bild → multimodales Modell, Datei → Kontext (`Capabilities::filesystem()` ist `true`, aber leer) | **Zurückgestellt** | Setzt multimodalen Backend-Support voraus (`openrouterbackend.cpp` sendet heute nur Text) — erst das klären, dann Picker anbinden |

@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import Sailfish.Share 1.0
 
 ListItem {
     id: item
@@ -9,6 +10,24 @@ ListItem {
     // Tool-Ergebnisse sind JSON fuer das Modell, nicht fuer den Nutzer. Sie
     // gehoeren in den Verlauf, aber als Beleg — nicht als Wortmeldung.
     property bool isTool: model.role === "tool"
+
+    // Nur echte Chat-Nachrichten sind teilbar, keine Tool-Belege und nichts,
+    // waehrend es noch streamt (model.content waere unvollstaendig).
+    menu: ContextMenu {
+        MenuItem {
+            text: qsTr("Share")
+            visible: !item.isTool && model.content.length > 0 && !model.pending
+            onClicked: {
+                shareAction.resources = [{ "data": model.content, "name": "message.txt" }]
+                shareAction.trigger()
+            }
+        }
+    }
+
+    ShareAction {
+        id: shareAction
+        mimeType: "text/plain"
+    }
 
     Column {
         id: column
