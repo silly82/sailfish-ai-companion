@@ -76,8 +76,9 @@ Validatorlauf. Vor dem nächsten Store-Upload gegen einen Tag-Build nachziehen.
       "jetzt"-Punkte (`Nemo.KeepAlive`, `Sailfish.Share`,
       `Capabilities::telephony()` auf `false`) sind umgesetzt und auf
       echter Hardware verifiziert (Jolla Phone 2026). Ein Punkt bleibt
-      zurückgestellt mit hoher Priorität (`Amber.Web.Authorization`/OAuth),
-      Rest entweder an M5/M6 gebunden oder vorerst verworfen.
+      ein Punkt zurückgestellt (`Amber.Web.Authorization`/OAuth, vorerst
+      nicht weiterverfolgt), Rest entweder an M5/M6 gebunden oder vorerst
+      verworfen.
       **Korrektur zur ursprünglichen Recherche:** Die frühere Tabelle
       notierte `qml(Nemo.KeepAlive)` als nötige `Requires:`-Zeile — das
       ist falsch. Die echte `allowed_requires.conf`
@@ -173,7 +174,7 @@ gesammelt aufgeschoben:
 | `Sailfish.Share 1.0` | Antwort an andere App weitergeben | **[x] Umgesetzt** | `ShareAction` + `menu: ContextMenu { MenuItem { text: qsTr("Share") ... } }` in `MessageDelegate.qml` (long-press, nur bei fertigen Nicht-Tool-Nachrichten). Live verifiziert: Kontextmenü und nativer Share-Dialog funktionieren |
 | `Sailfish.Telephony 1.0` | Ungenutzt — `Capabilities::telephony()` ist `true`, obwohl kein Tool es nutzt | **[x] Umgesetzt** | `Capabilities::telephony()` in beiden Zweigen auf `false` — kein konkretes Tool geplant, ein Flag ohne Wirkung ist irreführend (dieselbe Logik wie H2s „Manifest ehrlich machen“ für Contacts) |
 | `Nemo.Notifications 1.0` | „Antwort fertig“, wenn App im Hintergrund war | **Zurückgestellt** | Setzt `Nemo.KeepAlive`/Hintergrundlogik voraus, die es noch nicht gibt — erst sinnvoll, wenn das oben steht |
-| `Amber.Web.Authorization 1.0` | OAuth statt API-Key eintippen — grösster Einzelgewinn laut ursprünglicher Einschätzung, durch die heutige Key-Eingabe-Odyssee (Tastatur-Layout-Kalibrierung per `uinput`) nur bestätigt | **Zurückgestellt, hohe Priorität** | Kein Quick-Win — braucht Klärung, ob/wie OpenRouter einen OAuth-Code-Flow anbietet, bevor Code entsteht. Nächste Session vorschlagen |
+| `Amber.Web.Authorization 1.0` | OAuth statt API-Key eintippen — grösster Einzelgewinn laut ursprünglicher Einschätzung, durch die heutige Key-Eingabe-Odyssee (Tastatur-Layout-Kalibrierung per `uinput`) nur bestätigt | **Zurückgestellt** | Kein Quick-Win — braucht Klärung, ob/wie OpenRouter einen OAuth-Code-Flow anbietet, bevor Code entsteht. Auf Wunsch erstmal nicht weiterverfolgt (2026-09-15) |
 | `Sailfish.Pickers 1.0` | Anhänge: Bild → multimodales Modell, Datei → Kontext (`Capabilities::filesystem()` ist `true`, aber leer) | **Zurückgestellt** | Setzt multimodalen Backend-Support voraus (`openrouterbackend.cpp` sendet heute nur Text) — erst das klären, dann Picker anbinden |
 | `QtMultimedia 5.x` + `Sailfish.Media 1.0` | M6 Sprachein-/-ausgabe, Foto → Vision-Modell | **Zurückgestellt, Teil von M6** | Bereits als eigener Meilenstein in `README.md` getrackt |
 | `QtWebSockets 1.1` | Lokaler Modellserver/Streaming | **Zurückgestellt, Teil von M5** | Bereits als eigener Meilenstein in `README.md` getrackt |
