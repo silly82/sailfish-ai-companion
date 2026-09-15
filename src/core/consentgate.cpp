@@ -17,7 +17,11 @@ bool isSensitiveKey(const QString &key)
         << QStringLiteral("msisdn")    << QStringLiteral("email")
         << QStringLiteral("e_mail")    << QStringLiteral("mail")
         << QStringLiteral("address")   << QStringLiteral("street")
-        << QStringLiteral("postal_code") << QStringLiteral("zip");
+        << QStringLiteral("postal_code") << QStringLiteral("zip")
+        // Plural-Varianten, wie find_contact sie tatsächlich liefert
+        // (fullprovider.cpp) -- ohne die blieb "addresses" unredigiert:
+        // Freitext-Adressen matchen ohnehin keine Regex.
+        << QStringLiteral("phones")    << QStringLiteral("addresses");
     return keys.contains(key.toLower());
 }
 
@@ -93,11 +97,36 @@ QVariant ConsentGate::redactValue(const QVariant &value)
         const QVariantMap in = value.toMap();
         QVariantMap out;
         for (auto it = in.constBegin(); it != in.constEnd(); ++it) {
-            if (isSensitiveKey(it.key()) && !it.value().toString().isEmpty())
-                out.insert(it.key(), placeholderFor(it.value().toString()));
-            else
+            if (!isSensitiveKey(it.key())) {
                 out.insert(it.key(), redactValue(it.value()));
+                continue;
+            }
+            // Sensitiver Schlüssel: jeden Wert maskieren, nicht nur einen
+            // einzelnen String -- "phones"/"addresses" kommen als
+            // QStringList mit potenziell mehreren Einträgen (find_contact).
+            if (it.value().type() == QVariant::StringList) {
+                QVariantList redacted;
+                for (const QString &s : it.value().toStringList()) {
+                    if (!s.isEmpty()) redacted.append(placeholderFor(s));
+                }
+                out.insert(it.key(), redacted);
+            } else if (!it.value().toString().isEmpty()) {
+                out.insert(it.key(), placeholderFor(it.value().toString()));
+            } else {
+                out.insert(it.key(), redactValue(it.value()));
+            }
         }
+        return out;
+    }
+    // QStringList (e.g. find_contact's "phones"/"addresses") is a distinct
+    // QVariant type from QVariant::List -- without this case it fell through
+    // to the default branch below and went out completely unredacted,
+    // bypassing both the key- and the regex-based checks. Observed live on
+    // real hardware: real phone numbers reaching the cloud model verbatim.
+    case QVariant::StringList: {
+        QVariantList out;
+        for (const QString &s : value.toStringList())
+            out.append(redactValue(s));
         return out;
     }
     case QVariant::List: {

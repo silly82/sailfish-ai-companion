@@ -114,13 +114,7 @@ void ToolRegistry::buildManifest()
     if (m_caps->contacts()) {
         registerTool({"find_contact",
                       "Sucht einen Kontakt nach Name und liefert die hinterlegten "
-                      "Nummern und Adressen. Vorübergehend deaktiviert: die "
-                      "frühere Diagnose (Sailjail-Mount für den privilegierten "
-                      "Kontakte-Store defekt) ist widerlegt — die zitierte "
-                      "Logzeile ist normales Sandbox-Rauschen, der Gegentest lief "
-                      "unsandboxed über einen anderen Zugriffspfad. Tatsächliche "
-                      "Ursache noch offen, siehe H7/F1-F3 in "
-                      "docs/todo-harbour-vs-full.md.",
+                      "Nummern und Adressen.",
                       QJsonObject{
                           {"type", "object"},
                           {"properties", QJsonObject{
@@ -136,7 +130,6 @@ void ToolRegistry::buildManifest()
                           return m_provider->findContact(
                               args.value(QStringLiteral("query")).toString());
                       },
-                      false,
                       false});
     }
 

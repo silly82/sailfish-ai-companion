@@ -457,4 +457,51 @@ ist eine bestehende, test-dokumentierte Design-Entscheidung
 blosse Namen gelten im Projekt als unkritisch, nur Adresse/Telefon/E-Mail
 werden reflexhaft geschwärzt.
 
+## Nachtrag: `find_contact` wieder aktiviert, zwei Redaktions-Lecks gefunden (2026-09-15)
+
+H7 geklärt (Booster-Neustart, s. o.) → `find_contact` in `toolregistry.cpp`
+wieder mit `available=true` registriert (Standard, kein expliziter Parameter
+mehr nötig), Regressionstest `unavailableToolCannotBeEnabled` entfernt
+(keine Tool mehr mit `available=false`), stattdessen
+`findContactRedactsPhoneKeepsName` in `tst_toolregistry.cpp` ergänzt.
+
+Live-Test auf echter Hardware (Jolla Phone 2026, SFOS 5.2.0.17,
+`deepseek/deepseek-v4.1-flash`) deckte dabei **zwei echte, aktuelle
+Redaktions-Lecks** auf — beide behoben, auf demselben Gerät verifiziert:
+
+**Bug C — `QVariant::StringList` ohne eigenen Fall in
+`ConsentGate::redactValue()` (behoben).** `FullProvider::findContact()`
+liefert `phones`/`addresses` als `QStringList`, nicht als `QVariantList` —
+ein eigener `QVariant`-Typ. Ohne passenden `switch`-Fall landete das im
+`default: return value;` und ging **komplett unredigiert** durch, sowohl am
+Schlüssel- als auch am Regex-Pfad vorbei. Erster Live-Test zeigte echte
+Rufnummern im Klartext im gespeicherten Tool-Ergebnis
+(`"phones":["+41418870209","+41793607569"]`). Fix: neuer
+`case QVariant::StringList:` in `redactValue()`, wandelt in eine
+`QVariantList` um und redigiert jedes Element einzeln.
+
+**Bug D — Plural-Schlüssel `phones`/`addresses` fehlten in
+`isSensitiveKey()` (behoben).** Nach Fix C wurden Telefonnummern korrekt
+redigiert (sie matchen `phonePattern()`), aber **Adressen weiterhin nicht**
+— Freitext wie „In der Mühlematte 8, Altdorf" matcht keine Regex, und
+`isSensitiveKey()` kannte nur die Singular-Form `address`, nicht
+`addresses`. Fix: `phones`/`addresses` zu `isSensitiveKey()` ergänzt, dazu
+die `QVariant::Map`-Iteration in `redactValue()` umgebaut — ein sensitiver
+Schlüssel mit `QStringList`-Wert maskiert jetzt jedes Element einzeln über
+`placeholderFor()`, statt (wie zuvor) nur bei einem einzelnen String-Wert
+zu greifen.
+
+Beide Fixes mit Regressionstests abgesichert
+(`redactsStringListValues`, `redactsSensitiveKeyStringListByKey` in
+`tst_consentgate.cpp`; `findContactRedactsPhoneKeepsName` in
+`tst_toolregistry.cpp` prüft beide Felder), danach zweimal live auf dem
+Gerät nachgestellt: derselbe `find_contact`-Aufruf zeigte vorher Klartext,
+nachher `<contact:N>`-Platzhalter für Telefonnummern und Adressen
+gleichermassen — das Modell hat in beiden Fällen korrekt erkannt, dass es
+die echten Werte nicht kennt, und das dem Nutzer auch so mitgeteilt.
+
+**Einordnung:** Bug C betraf nicht nur `find_contact` — jeder künftige Tool-
+Output mit einem `QStringList`-Feld wäre vom selben Loch betroffen gewesen.
+Aktuell ist `find_contact` der einzige Konsument.
+
 

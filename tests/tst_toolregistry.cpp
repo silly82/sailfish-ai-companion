@@ -142,27 +142,35 @@ void TestToolRegistry::redactsPersonalResultAfterConsent()
                 .startsWith(QStringLiteral("<contact:")));
 }
 
-void TestToolRegistry::unavailableToolCannotBeEnabled()
+void TestToolRegistry::findContactRedactsPhoneKeepsName()
 {
-    // find_contact ist als available = false registriert, waehrend die
-    // eigentliche Ursache noch offen ist (H7, docs/todo-harbour-vs-full.md).
-    // Die Tests hier definieren SFAI_HARBOUR nicht (tests/tests.pro), pruefen
-    // also den Full-Zweig von Capabilities::contacts() (== true).
+    // find_contact war bis H7 (docs/todo-harbour-vs-full.md) als
+    // available=false ausgegraut; die Ursache ist inzwischen geklaert
+    // (veralteter Booster, kein App-/Sailjail-Bug) und das Tool wieder aktiv.
     Fixture f;
-    QVariantMap byName;
-    for (const QVariant &v : f.registry.tools())
-        byName.insert(v.toMap().value(QStringLiteral("name")).toString(), v);
-    QVERIFY(!byName.value(QStringLiteral("find_contact")).toMap()
-                 .value(QStringLiteral("available")).toBool());
-
     f.registry.setToolEnabled(QStringLiteral("find_contact"), true);
+    f.registry.grantConsent(QStringLiteral("find_contact"));
 
     const QVariantMap out =
         f.registry.invoke(QStringLiteral("find_contact"),
                           QVariantMap{{"query", "Anna"}});
-    QCOMPARE(out.value(QStringLiteral("error")).toString(),
-             QStringLiteral("tool_disabled"));
-    QVERIFY(f.provider.lastQuery.isEmpty());
+
+    QCOMPARE(f.provider.lastQuery, QStringLiteral("Anna"));
+    QVERIFY(!out.contains(QStringLiteral("error")));
+    // Namen gelten als unkritisch (s. redactsBySensitiveKey), Telefonnummern
+    // nicht -- "phones" kommt als QStringList vom Provider, ein anderer
+    // QVariant-Typ als eine normale Liste (siehe ConsentGate::redactValue()).
+    QCOMPARE(out.value(QStringLiteral("name")).toString(),
+             QStringLiteral("Anna Muster"));
+    const QVariantList phones = out.value(QStringLiteral("phones")).toList();
+    QCOMPARE(phones.size(), 1);
+    QVERIFY(phones.first().toString().startsWith(QStringLiteral("<contact:")));
+
+    // Freitext-Adressen matchen keine Regex -- muss ueber den Schluessel
+    // "addresses" erkannt werden, sonst geht sie unredigiert durch.
+    const QVariantList addresses = out.value(QStringLiteral("addresses")).toList();
+    QCOMPARE(addresses.size(), 1);
+    QVERIFY(addresses.first().toString().startsWith(QStringLiteral("<contact:")));
 }
 
 void TestToolRegistry::leavesLowResultUntouched()

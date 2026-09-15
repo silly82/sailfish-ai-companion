@@ -34,8 +34,12 @@ public:
     QVariantMap findContact(const QString &query) override
     {
         lastQuery = query;
-        return QVariantMap{{"name", "Anna Muster"},
-                           {"phone", "+41 79 123 45 67"}};
+        // QStringList, wie die echten Provider (fullprovider.cpp) es liefern
+        // -- ein anderer QVariant-Typ als eine "normale" QVariantList, mit
+        // eigenem Redaktions-Fall in ConsentGate::redactValue().
+        return QVariantMap{{"name",      "Anna Muster"},
+                           {"phones",    QStringList{"+41 79 123 45 67"}},
+                           {"addresses", QStringList{"Bahnhofstrasse 1, Zürich"}}};
     }
 
     QVariantMap recentMessages(int) override { return QVariantMap{}; }

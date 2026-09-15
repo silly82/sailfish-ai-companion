@@ -95,6 +95,39 @@ void TestConsentGate::leavesHarmlessNumbersAlone()
     QCOMPARE(out.value(QStringLiteral("version")).toString(), QStringLiteral("5.0.0.62"));
 }
 
+void TestConsentGate::redactsStringListValues()
+{
+    // QStringList (find_contact's "phones"/"addresses" in fullprovider.cpp)
+    // ist ein eigener QVariant-Typ, verschieden von QVariant::List --
+    // fehlte der Fall, ging der ganze Wert unredigiert durch (beobachtet auf
+    // echter Hardware: echte Telefonnummern im Klartext ans Cloud-Modell).
+    ConsentGate gate;
+    const QVariantMap in{
+        {"phones", QStringList{"+41 79 123 45 67", "+41 44 987 65 43"}}
+    };
+
+    const QVariantList out = gate.redact(in).value(QStringLiteral("phones")).toList();
+    QCOMPARE(out.size(), 2);
+    for (const QVariant &v : out)
+        QVERIFY(v.toString().startsWith(QStringLiteral("<contact:")));
+}
+
+void TestConsentGate::redactsSensitiveKeyStringListByKey()
+{
+    // "addresses" (Freitext) matcht keine Regex -- anders als "phones"
+    // haengt die Redaktion hier komplett am Schluesselnamen. Beobachtet auf
+    // echter Hardware: eine echte Adresse blieb trotz des StringList-Fixes
+    // im Klartext, weil "addresses" (Plural) nicht in isSensitiveKey() stand.
+    ConsentGate gate;
+    const QVariantMap in{
+        {"addresses", QStringList{"In der Mühlematte 8, Altdorf"}}
+    };
+
+    const QVariantList out = gate.redact(in).value(QStringLiteral("addresses")).toList();
+    QCOMPARE(out.size(), 1);
+    QVERIFY(out.first().toString().startsWith(QStringLiteral("<contact:")));
+}
+
 void TestConsentGate::leavesIsoDatesAlone()
 {
     // phonePattern() matched "2026-01-15" innerhalb eines ISO-Zeitstempels
