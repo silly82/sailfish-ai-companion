@@ -93,23 +93,30 @@ Validatorlauf. Vor dem nächsten Store-Upload gegen einen Tag-Build nachziehen.
       `${PRIVILEGED}/Calendar`), `CommunicationHistory` (+ `Messages`, wenn
       Telepathie/ofono gebraucht wird) für `read_recent_messages`,
       `Internet` + `Secrets` unverändert.
-- [x] **F3 (Mount bestätigt, Tool-Call noch offen)** Im SDK-Emulator
-      (5.1.0.11-i486) verifiziert: `sudo cat /proc/<pid>/mounts` für den
-      laufenden, sandboxed `sailfishai`-Prozess zeigt
-      `/home/defaultuser/.local/share/system/privileged/Contacts` **und**
-      `.../privileged/Calendar` als `rw`-Bind-Mounts innerhalb der Sandbox —
-      vorher (ohne `[X-Sailjail]`, siehe F1) waren diese Pfade dort nicht
-      sichtbar. Die generierte `firejail`-Kommandozeile
-      (`pgrep -a firejail`) listet entsprechend
-      `--profile=.../Contacts.permission --profile=.../Calendar.permission
-      --profile=.../CommunicationHistory.permission`. Bestätigt die
-      F3-Hypothese: der fehlende Mount, nicht ein „Lock-Konflikt“, war die
-      wahrscheinlichste Ursache für `query_failed`. Noch nicht getestet:
-      ein echter `get_upcoming_events`-Tool-Call durch den Chat (braucht
-      einen echten API-Key gegen ein Cloud-Modell, hier nicht verfügbar) —
-      der Mount allein beweist noch nicht, dass `mKCal::SqliteStorage` die
-      leere/neue Emulator-Kalenderdatenbank auch tatsächlich fehlerfrei
-      öffnet und lädt.
+- [x] **F3 (vollständig bestätigt)** Zwei Belege im SDK-Emulator
+      (5.1.0.11-i486):
+      1. `sudo cat /proc/<pid>/mounts` für den laufenden, sandboxed
+         `sailfishai`-Prozess zeigt
+         `/home/defaultuser/.local/share/system/privileged/Contacts` **und**
+         `.../privileged/Calendar` als `rw`-Bind-Mounts innerhalb der
+         Sandbox — vorher (ohne `[X-Sailjail]`, siehe F1) waren diese Pfade
+         dort nicht sichtbar. Die generierte `firejail`-Kommandozeile
+         (`pgrep -a firejail`) listet entsprechend
+         `--profile=.../Contacts.permission --profile=.../Calendar.permission
+         --profile=.../CommunicationHistory.permission`.
+      2. Echter End-to-End-Test mit einem echten API-Key gegen
+         `deepseek/deepseek-v4.1-flash` (OpenRouter): Frage nach
+         Kalenderterminen → Modell ruft `get_upcoming_events` mit `days: 7`
+         auf → ConsentGate-Dialog → nach Bestätigung liefert der Tool-Call
+         `{"events":[]}` statt des vorherigen `query_failed` — die
+         (leere) Emulator-Kalenderdatenbank öffnet und lädt jetzt
+         fehlerfrei.
+
+      Beides zusammen bestätigt die F3-Hypothese: der fehlende
+      `Calendar`-Permission-Mount, nicht ein „Lock-Konflikt“, war die
+      tatsächliche Ursache für `query_failed`. Keine weitere Änderung an
+      `FullProvider::upcomingEvents()` nötig. Auf echter Hardware noch nicht
+      wiederholt.
 - [ ] **F4** `X-Nemo-Application-Type=silica-qt5`, `OrganizationName`,
       `ApplicationName` in beiden Desktop-Dateien müssen zu
       `QStandardPaths`/`QSettings`-Pfaden passen — beim Nachziehen von F1
