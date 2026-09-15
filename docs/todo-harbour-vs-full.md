@@ -193,6 +193,29 @@ Damit diese Punkte nicht wieder als Harbour-Aufgabe auftauchen:
 - `./scripts/run-tests.sh` nach jeder Code-Änderung (H1b/H2) — die
   `src/core/`-Suite deckt `Capabilities`/`ToolRegistry` ab.
 
+Copy-paste-Kette am Build-Rechner (Target an das installierte SDK anpassen):
+
+```
+SDKTARGET=SailfishOS-5.0.0.62-aarch64
+sfdk -c target=$SDKTARGET -c specfile=rpm/harbour-nemoai.spec build
+sfdk -c target=$SDKTARGET -c specfile=rpm/harbour-nemoai.spec check
+# Soll nach H1: keine Zeile "Cannot link to shared library: libQt5Contacts.so.5"
+rpm -qp --requires RPMS/*/harbour-nemoai-*.aarch64.rpm | grep -i contacts   # leer
+objdump -x harbour-nemoai | grep NEEDED | grep -i contacts                  # leer
+./scripts/run-tests.sh                                                      # Desktop-Core
+rpm -qp --requires RPMS/*/sailfishai-*.aarch64.rpm | grep -E 'commhistory|mkcal'
+```
+
+Auf dem Gerät (Full-Target nach F1):
+
+```
+pgrep -a firejail | head        # generierte Kommandozeile muss die Permissions zeigen
+journalctl -f -t invoker        # Startzeile; "can't chdir to privileged" ist Rauschen
+```
+
+`sfdk check` gilt nur für das Harbour-Spec — der Full-Build wird am Gerät
+geprüft (`pkcon install`, dann die drei Tools im Chat auslösen).
+
 ## Reihenfolge
 
 1. H1 + H2 (Harbour wieder regelkonform; ohne das ist kein Store-Upload
@@ -202,4 +225,107 @@ Damit diese Punkte nicht wieder als Harbour-Aufgabe auftauchen:
 3. H3, H4, H5 (Deklarationen aufräumen).
 4. H7 (Diagnose richtigstellen) und die Doku-Korrekturen.
 5. Erst danach H8-Backlog priorisieren.
+
+## Anhang — exakte Stellen für die Umsetzung am Build-Rechner
+
+Zeilenangaben gegen Commit `6368d7b` (`git show 6368d7b` als Referenz).
+
+### H1a — QtContacts aus dem Harbour-Build
+
+`sailfish-ai-companion.pro`
+- Ist, Z. 23: `QT     += network sql dbus contacts`
+- Soll: `QT     += network sql dbus` (Z. 23), dafür im `fullaccess`-Block
+  (Z. 56-60, neben `PKGCONFIG += commhistory-qt5 libmkcal-qt5
+  KF5CalendarCore`) ein `QT += contacts` ergänzen.
+
+`rpm/harbour-nemoai.spec`
+- Ist, Z. 20: `BuildRequires: pkgconfig(Qt5Contacts)` → löschen.
+- Im `rpm/sailfishai.spec` bleibt `pkgconfig(Qt5Contacts)` stehen (dort erlaubt).
+
+`tests/tests.pro` bleibt unberührt: die Desktop-Suite linkt kein QtContacts
+(Z. 12: `QT += testlib network sql`), `QT -= gui`.
+
+### H1b — QtContacts aus dem Sandboxed-Provider
+
+`src/platform/sandboxed/sandboxedprovider.cpp`
+- Ist: Z. 7-11 die fünf `QContact*`-Includes, Z. 13 `QTCONTACTS_USE_NAMESPACE`,
+  Z. 129-175 `findContact()`.
+- Soll: Includes und `QTCONTACTS_USE_NAMESPACE` raus; `findContact()` wird ein
+  Stub. `ISystemProvider::findContact` ist **pure virtual**
+  (`src/platform/isystemprovider.h`, Z. 26), der Stub muss also bleiben —
+  z. B. `return unsupported();` wie bei `recentMessages()`.
+- Mitziehen: Kommentarblock in `sandboxedprovider.h` (Z. 15-22 nennt
+  „Sailfish.Contacts“ als erlaubten Kanal) und der Kommentar in
+  `isystemprovider.h` (Z. 10-11) auf die tatsächliche Lage bringen.
+
+### H2 — Kontakte im Harbour-Target
+
+Kurzfristig (macht den Harbour-Build manifest-seitig ehrlich):
+- `src/core/capabilities.cpp`, Z. 7 (im `#ifdef SFAI_HARBOUR`-Zweig):
+  `contacts()` → `false`, mit Verweis auf diesen Abschnitt.
+- Folge: `ToolRegistry::buildManifest()` registriert `find_contact` im Harbour
+  gar nicht mehr. Der `available`-Ausgraumechanismus aus 0.9.2 bleibt für den
+  Full-Fall bestehen.
+
+Achtung Testlage: `tests/tests.pro` definiert `SFAI_HARBOUR` **nicht**, die
+Desktop-Suite kompiliert also den `#else`-Zweig (`contacts() == true`).
+`tests/tst_toolregistry.cpp` Z. 60 sowie `unavailableToolCannotBeEnabled`
+(Z. 145-165) bleiben deshalb unverändert gültig. Wer das Harbour-Manifest
+testen will, braucht ein zweites Testziel mit `DEFINES += SFAI_HARBOUR` —
+existiert heute nicht.
+
+Eigentlicher Fix (Entwurf, ohne Gerät nicht verifizierbar):
+- Erlaubter Weg ist QML: `import Sailfish.Contacts 1.0` bzw.
+  `import org.nemomobile.contacts 1.0`, dazu
+  `Requires: qml(Sailfish.Contacts)` bzw. `qml(org.nemomobile.contacts)`
+  (`allowed_requires.conf` Z. 45/103) im Harbour-Spec.
+- Brücke nach C++: `ToolRegistry` bekommt eine setzbare Handler-Schnittstelle
+  (`Q_INVOKABLE QVariantMap invoke(const QString &tool, const QVariantMap &args)`),
+  die in `main.cpp` auf ein QML-Objekt gesetzt wird; `find_contact` läuft dann
+  in QML und liefert das Ergebnis synchron zurück. Alternativ den Tool-Aufruf
+  umdrehen und nur das Schema aus C++ liefern.
+- Offen zu klären, ob der privilegierte Contacts-Store innerhalb der Sandbox
+  erreichbar ist (siehe H7) — erst messen, dann bauen.
+
+### H3 — `Bluetooth` in der Harbour-Desktop-Datei
+
+`harbour-nemoai.desktop`, Z. 12
+- Ist: `Permissions=Internet;Secrets;Contacts;Bluetooth`
+- Soll (Bluetooth-Tool kommt nicht): `Permissions=Internet;Secrets`
+- Falls `find_contact` bis dahin entfernt ist (H2), entfällt auch `Contacts`.
+- Falls das Tool doch kommt: `org.kde.bluezqt 1.0` oder
+  `Sailfish.Bluetooth 1.0` implementieren und `Bluetooth` begründet behalten.
+
+### H4, H5 — Harbour-Requires
+
+`rpm/harbour-nemoai.spec`
+- Z. 11 `Requires:   nemo-qml-plugin-notifications-qt5` → entweder löschen
+  (kein Aufruf im Code) oder `Requires: qml(Nemo.Notifications)` ergänzen und
+  die Notification tatsächlich bauen (H8-Backlog, Zeile 2).
+- Nach Z. 10 (`Requires: sailfishsecretsdaemon`) ergänzen:
+  `Requires:   sailfishsecretsdaemon-cryptoplugins-default`,
+  `Requires:   sailfishsecretsdaemon-secretsplugins-default`
+  (`allowed_requires.conf` Z. 56-58).
+
+### F1 — `[X-Sailjail]` für `sailfishai.desktop`
+
+- Ist: nur ein Kommentar, keine Sektion.
+- Soll (Vorschlag):
+  ```
+  [X-Sailjail]
+  OrganizationName=ch.silly
+  ApplicationName=sailfishai
+  Permissions=Internet;Secrets;Contacts;Calendar;CommunicationHistory;Privileged
+  ```
+- `OrganizationName` muss zu `app->setOrganizationName(QStringLiteral("ch.silly"))`
+  in `src/main.cpp` passen, `ApplicationName` zum Binary-/Settings-Pfad
+  (`app->setApplicationName(SFAI_TARGET_NAME)`), sonst verschieben sich
+  Datenverzeichnisse (`ConversationStore::open()`) und `QSettings`-Dateien.
+  Vor dem Umstellen auf dem Gerät prüfen, wo `~/.local/share/ch.silly/sailfishai/`
+  und die `history.db` aktuell liegen.
+- Beispiel einer grossen solchen Liste liefert sailjail selbst
+  (`daemon/appinfo.c`, Z. 216: `Permissions=Phone;CallRecordings;Contacts;Bluetooth;Privileged;Sharing`).
+- `Privileged` nur setzen, wenn wirklich nötig — es ist die Pseudo-Permission,
+  die `${PRIVILEGED}` öffnet, und in Harbour verboten.
+
 
